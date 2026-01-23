@@ -1,0 +1,22 @@
+# This file tells GitLab how to build and deploy your site
+image: node:20-bookworm
+
+# Cache modules to speed up subsequent builds
+cache:
+  paths:
+    - .npm/
+
+pages:
+  stage: deploy
+  script:
+    - npm ci --cache .npm --prefer-offline
+    - npm run build
+    # GitLab Pages expects the static files to be in a folder named 'public'
+    # Vite outputs to 'dist', so we rename/move it
+    - rm -rf public
+    - mv dist public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main # Deploy only when changes are pushed to the main branch
