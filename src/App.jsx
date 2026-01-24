@@ -308,7 +308,7 @@ const App = () => {
           </div>
         )}
 
-        {/* Reels Section */}
+        {/* Reels Section
         {activeTab === 'reels' && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
             {REPO.reels.map((reel) => (
@@ -333,7 +333,7 @@ const App = () => {
               </div>
             ))}
           </div>
-        )}
+        )} */}
       </main>
 
       {/* About Section */}
