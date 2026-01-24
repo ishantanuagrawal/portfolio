@@ -30,19 +30,19 @@ const App = () => {
     let introModules = {};
 
     try {
-      // Photography: Standard images
+      // Photography: Standard images in subdirectories
       photoModules = import.meta.glob('/public/assets/photography/*/*.{avif,png,jpg,jpeg,webp,JPG,PNG}', { eager: true });
       
-      // Videography: Thumbnails/Images
+      // Videography: Thumbnails/Images in subdirectories
       videoModules = import.meta.glob('/public/assets/videography/*/*.{avif,png,jpg,jpeg,webp,mp4,webm}', { eager: true });
       
-      // Videography Links
+      // Videography Links: .txt files containing the redirect URLs
       videoTxtModules = import.meta.glob('/public/assets/videography/*/*.txt', { query: '?raw', import: 'default', eager: true });
       
-      // Reels: Flat directory
+      // Reels: Flat directory assets
       reelModules = import.meta.glob('/public/assets/reels/*.{avif,png,jpg,jpeg,webp,mp4}', { eager: true });
 
-      // Reels Links
+      // Reels Links: .txt files for reels
       reelTxtModules = import.meta.glob('/public/assets/reels/*.txt', { query: '?raw', import: 'default', eager: true });
 
       // Intro/About Image: Single file directory
@@ -62,7 +62,7 @@ const App = () => {
         const filenameWithoutExt = fullFilename.split('.').slice(0, -1).join('.');
         const browserUrl = path.replace('/public', ''); 
 
-        // Look for matching .txt file
+        // Look for matching .txt file to extract redirect link
         let externalLink = null;
         if (isVideo) {
           const txtPath = path.substring(0, path.lastIndexOf('.')) + '.txt';
@@ -107,32 +107,6 @@ const App = () => {
     const introImage = introImgPath 
       ? introImgPath.replace('/public', '') 
       : 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=800';
-
-    // Fallback data for the Canvas environment
-    if (Object.keys(photography).length === 0 && Object.keys(videography).length === 0 && reels.length === 0) {
-      return {
-        photography: {
-          interiors: [{ id: 's1', title: 'Sample Interior', url: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=800' }]
-        },
-        videography: {
-          brand_films: [{ 
-            id: 's2', 
-            title: 'Sample Film (Create a .txt file locally)', 
-            url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=800',
-            externalLink: 'https://www.youtube.com' 
-          }]
-        },
-        reels: [
-          { 
-            id: 's3', 
-            title: 'Sample Reel', 
-            url: 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&q=80&w=800',
-            externalLink: 'https://www.instagram.com' 
-          }
-        ],
-        intro: introImage
-      };
-    }
 
     return { photography, videography, reels, intro: introImage };
   }, []);
@@ -244,9 +218,9 @@ const App = () => {
         {activeTab === 'photography' && (
           <div>
             <div className="flex flex-wrap gap-2 mb-10">
-              <button onClick={() => setPhotoFilter('all')} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${photoFilter === 'all' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200 hover:border-zinc-400'}`}>Show All Categories</button>
+              <button onClick={() => setPhotoFilter('all')} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${photoFilter === 'all' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200'}`}>Show All Categories</button>
               {Object.keys(REPO.photography).map((dir) => (
-                <button key={dir} onClick={() => setPhotoFilter(dir)} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${photoFilter === dir ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200 hover:border-zinc-400'}`}>
+                <button key={dir} onClick={() => setPhotoFilter(dir)} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${photoFilter === dir ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200'}`}>
                   {formatLabel(dir)}
                 </button>
               ))}
@@ -269,9 +243,9 @@ const App = () => {
         {activeTab === 'videography' && (
           <div>
             <div className="flex flex-wrap gap-2 mb-10">
-              <button onClick={() => setVideoFilter('all')} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${videoFilter === 'all' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200 hover:border-zinc-400'}`}>Show All Categories</button>
+              <button onClick={() => setVideoFilter('all')} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${videoFilter === 'all' ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200'}`}>Show All Categories</button>
               {Object.keys(REPO.videography).map((dir) => (
-                <button key={dir} onClick={() => setVideoFilter(dir)} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${videoFilter === dir ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200 hover:border-zinc-400'}`}>
+                <button key={dir} onClick={() => setVideoFilter(dir)} className={`px-4 py-1.5 rounded-full text-[10px] uppercase border transition-all ${videoFilter === dir ? 'bg-zinc-900 text-white border-zinc-900' : 'text-zinc-500 border-zinc-200'}`}>
                   {formatLabel(dir)}
                 </button>
               ))}
@@ -308,7 +282,7 @@ const App = () => {
           </div>
         )}
 
-        {/* Reels Section
+        {/* Reels Section */}
         {activeTab === 'reels' && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
             {REPO.reels.map((reel) => (
@@ -333,7 +307,7 @@ const App = () => {
               </div>
             ))}
           </div>
-        )} */}
+        )}
       </main>
 
       {/* About Section */}
