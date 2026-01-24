@@ -13,5 +13,5 @@ export default defineConfig({
   // This base path matches your GitLab repository: ishantanuagrawal-portfolio
   // Note: If you point a custom domain (e.g., sbsmedia.in) to this site later,
   // you will need to change this base back to '/'
-  base: '/ishantanuagrawal-portfolio/', 
+  base: '/', 
 })
