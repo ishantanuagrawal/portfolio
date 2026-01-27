@@ -334,7 +334,7 @@ const App = () => {
         <div className="px-6 max-w-7xl mx-auto mb-10"><p className="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-bold">Partnerships</p></div>
         <div className="w-full overflow-hidden">
           <div className="animate-scroll whitespace-nowrap py-4">
-            {['Vogue', 'Tesla', 'Airbnb', 'Nike', 'Red Bull', 'Adobe', 'Sony', 'Canon', 'Apple', 'Zara', 'BMW', 'Rolex', 'Uber', 'Spotify'].concat(['Vogue', 'Tesla', 'Airbnb', 'Nike', 'Red Bull', 'Adobe', 'Sony', 'Canon', 'Apple', 'Zara', 'BMW', 'Rolex', 'Uber', 'Spotify']).map((c, i) => (
+            {['Westside', 'Urban Vault', 'Smadex', 'Ketto', 'Aditya Birla', 'Ketto', 'EIMR', 'JITO', 'Riverside', 'RCC', 'Europe Girl', 'NewMe', '1st Coffee', 'Conrad', 'Pi Ventures', 'Vippy Soya', 'Under25','Brigade','BizDateUp','Verix','WLDD','Google','Ola','Bloom','Things 2 Do'].concat(['Vogue', 'Tesla', 'Airbnb', 'Nike', 'Red Bull', 'Adobe', 'Sony', 'Canon', 'Apple', 'Zara', 'BMW', 'Rolex', 'Uber', 'Spotify']).map((c, i) => (
               <span key={i} className="mx-12 text-4xl md:text-6xl font-bold tracking-tighter text-zinc-200 hover:text-zinc-900 transition-colors uppercase select-none">{c}</span>
             ))}
           </div>
@@ -344,10 +344,10 @@ const App = () => {
       {/* Footer */}
       <footer className="py-16 border-t border-zinc-100 bg-white text-center">
         <div className="flex justify-center flex-wrap gap-12 mb-10 text-zinc-300">
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Instagram size={24} /></a>
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Youtube size={24} /></a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Linkedin size={24} /></a>
-          <a href="https://wa.me/yournumber" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><MessageCircle size={24} /></a>
+          <a href="https://instagram.com/storiesbyshantanu/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Instagram size={24} /></a>
+          <a href="https://www.youtube.com/@shantanu.sbsmedia/videos" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Youtube size={24} /></a>
+          <a href="https://www.linkedin.com/in/shantanu-agrawal-6b3893191/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Linkedin size={24} /></a>
+          <a href="https://wa.me/9455385894" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><MessageCircle size={24} /></a>
           <a href="mailto:hello@sbsmedia.co.in" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Mail size={24} /></a>
         </div>
         <p className="text-[9px] uppercase tracking-[0.4em] text-zinc-400 font-medium">
