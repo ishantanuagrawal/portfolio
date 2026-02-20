@@ -60,7 +60,9 @@ const App = () => {
 
         const fullFilename = parts[parts.length - 1];
         const filenameWithoutExt = fullFilename.split('.').slice(0, -1).join('.');
-        const browserUrl = path.replace('/public', ''); 
+        
+        // FIX: Prepend Vite's BASE_URL so it works on GitHub Pages subdirectories
+        const browserUrl = import.meta.env.BASE_URL + path.replace(/^\/public\//, ''); 
 
         // Look for matching .txt file to extract redirect link
         let externalLink = null;
@@ -96,7 +98,8 @@ const App = () => {
       
       return {
         id: path,
-        url: path.replace('/public', ''),
+        // FIX: Prepend Vite's BASE_URL 
+        url: import.meta.env.BASE_URL + path.replace(/^\/public\//, ''),
         title: filenameWithoutExt.replace(/[-_]/g, ' '),
         externalLink: externalLink
       };
@@ -104,8 +107,10 @@ const App = () => {
 
     // Pick the intro image (first file in public/assets/intro/)
     const introImgPath = Object.keys(introModules)[0];
+    
+    // FIX: Prepend Vite's BASE_URL to the intro image
     const introImage = introImgPath 
-      ? introImgPath.replace('/public', '') 
+      ? import.meta.env.BASE_URL + introImgPath.replace(/^\/public\//, '') 
       : 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=800';
 
     return { photography, videography, reels, intro: introImage };
