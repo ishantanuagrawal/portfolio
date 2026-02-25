@@ -189,7 +189,7 @@ const App = () => {
             <button onClick={() => scrollWithOffset('contact')} className="hover:text-zinc-900 transition-colors">Contact</button>
           </div>
           <button className="md:hidden z-50 p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={50} /> : <Menu size={28} />}
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
       </nav>
