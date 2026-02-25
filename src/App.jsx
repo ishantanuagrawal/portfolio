@@ -180,7 +180,7 @@ const App = () => {
       <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md py-4 border-b border-zinc-100 shadow-sm' : 'bg-transparent py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <img
-            src={import.meta.env.BASE_URL + 'assets/photography/sbslogo/Black%20png%20logo%20for%20watermark%20SBS.png'}
+            src={import.meta.env.BASE_URL + 'assets/sbslogo/Black%20png%20logo%20for%20watermark%20SBS.png'}
             alt="SBS Media Logo"
             className="site-logo cursor-pointer transition-opacity hover:opacity-80"
             onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
