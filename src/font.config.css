@@ -5,17 +5,14 @@
     --scale-headings : additional multiplier for headings (3xl/4xl/6xl)
     --scale-body     : multiplier for body / paragraph / base sizes
     --scale-ui       : multiplier for UI labels, badges, small text
-    --scale-section-headings : multiplier for section titles like Portfolio, About, Clients, Contact
 
     Example: to increase everything by 2x set --scale-global: 2;
     Example: to increase headings by 50% set --scale-headings: 1.5;
-    Example: to increase section titles by 2x set --scale-section-headings: 2;
   */
   --scale-global: 1; /* affects ALL sizes */
   --scale-headings: 1; /* affects: .text-3xl, .text-4xl, .text-6xl, .md:text-6xl */
   --scale-body: 1; /* affects: .text-base, .text-lg, .text-xl, .text-[10px], .text-[11px] */
   --scale-ui: 1; /* affects: .text-[8px], .text-[9px], small labels */
-  --scale-section-headings: 1.3; /* affects: .section-heading-large (Portfolio, About, etc.) */
 
   /* Base size tokens (do not change unless you want different base px values) */
   --b-8: 8px;
@@ -30,6 +27,15 @@
   --b-3xl: 30px;
   --b-4xl: 40px;
   --b-6xl: 96px;
+
+  /* Logo sizing tokens and scale:
+     --scale-logo: multiplies the logo size (set to 1, 3, 5 etc.)
+     --b-logo-mobile : base logo height in px for mobile (matches Tailwind h-8 = 32px)
+     --b-logo-desktop: base logo height for md+ (matches Tailwind h-10 = 40px)
+  */
+  --scale-logo: 2; /* change to 3 or 5 to scale the logo 3x or 5x */
+  --b-logo-mobile: 32px; /* corresponds to h-8 */
+  --b-logo-desktop: 40px; /* corresponds to md:h-10 */
 }
 
 /* === Mapped classes ===
@@ -60,6 +66,21 @@
   .md\:text-6xl { font-size: calc(var(--b-6xl) * var(--scale-global) * var(--scale-headings)) !important; }
 }
 
+/* Logo mapping: add class `site-logo` to the header img to control its size
+   Change `--scale-logo` (1, 3, 5, etc.) to scale the logo across the site.
+*/
+.site-logo {
+  height: calc(var(--b-logo-mobile) * var(--scale-global) * var(--scale-logo)) !important;
+  width: auto;
+  display: inline-block;
+}
+
+@media (min-width: 768px) {
+  .site-logo {
+    height: calc(var(--b-logo-desktop) * var(--scale-global) * var(--scale-logo)) !important;
+  }
+}
+
 /* Small helper classes (optional) */
 .fs-8 { font-size: calc(var(--b-8)  * var(--scale-global) * var(--scale-ui)); }
 .fs-9 { font-size: calc(var(--b-9)  * var(--scale-global) * var(--scale-ui)); }
@@ -71,6 +92,3 @@
 /* Keep fluid heading utilities for compatibility */
 .fluid-h1 { font-size: clamp(2.5rem, 8vw, 6rem); }
 .fluid-h2 { font-size: clamp(2rem, 5vw, 4rem); }
-
-/* Section heading large (Portfolio, About, Clients, Contact, etc.) */
-.section-heading-large { font-size: calc(var(--b-11) * var(--scale-global) * var(--scale-section-headings)) !important; }
