@@ -1,49 +1,76 @@
 :root {
-  /* Font size tokens (change these values to update site-wide) */
-  --fs-8px: 8px;
-  --fs-9px: 9px;
-  --fs-10px: 10px;
-  --fs-11px: 11px;
+  /*
+    Scale fields you can edit (change these numbers to scale text site-wide):
+    --scale-global   : multiplies all sizes (set to 1, 1.5, 2, etc.)
+    --scale-headings : additional multiplier for headings (3xl/4xl/6xl)
+    --scale-body     : multiplier for body / paragraph / base sizes
+    --scale-ui       : multiplier for UI labels, badges, small text
+    --scale-section-headings : multiplier for section titles like Portfolio, About, Clients, Contact
 
-  --fs-base: 16px; /* text-base */
-  --fs-lg: 18px;   /* text-lg */
-  --fs-xl: 20px;   /* text-xl */
+    Example: to increase everything by 2x set --scale-global: 2;
+    Example: to increase headings by 50% set --scale-headings: 1.5;
+    Example: to increase section titles by 2x set --scale-section-headings: 2;
+  */
+  --scale-global: 1; /* affects ALL sizes */
+  --scale-headings: 1; /* affects: .text-3xl, .text-4xl, .text-6xl, .md:text-6xl */
+  --scale-body: 1; /* affects: .text-base, .text-lg, .text-xl, .text-[10px], .text-[11px] */
+  --scale-ui: 1; /* affects: .text-[8px], .text-[9px], small labels */
+  --scale-section-headings: 1.3; /* affects: .section-heading-large (Portfolio, About, etc.) */
 
-  --fs-3xl: 30px;  /* text-3xl approx */
-  --fs-4xl: 40px;  /* text-4xl approx */
-  --fs-6xl: 96px;  /* text-6xl (md variant used in markup) */
+  /* Base size tokens (do not change unless you want different base px values) */
+  --b-8: 8px;
+  --b-9: 9px;
+  --b-10: 10px;
+  --b-11: 11px;
+
+  --b-base: 16px;
+  --b-lg: 18px;
+  --b-xl: 20px;
+
+  --b-3xl: 30px;
+  --b-4xl: 40px;
+  --b-6xl: 96px;
 }
 
-/* Map explicit bracketed Tailwind classes used in the app to variables */
-.text-\[8px\] { font-size: var(--fs-8px) !important; }
-.text-\[9px\] { font-size: var(--fs-9px) !important; }
-.text-\[10px\] { font-size: var(--fs-10px) !important; }
-.text-\[11px\] { font-size: var(--fs-11px) !important; }
+/* === Mapped classes ===
+   The following classes are used in `src/App.jsx`. They are computed from
+   the base tokens and the 4 scale fields above. To scale the entire site,
+   change `--scale-global`. To target only headings/body/ui, change those.
+*/
 
-.text-base { font-size: var(--fs-base) !important; }
-.text-lg { font-size: var(--fs-lg) !important; }
-.text-xl { font-size: var(--fs-xl) !important; }
-.text-3xl { font-size: var(--fs-3xl) !important; }
-.text-4xl { font-size: var(--fs-4xl) !important; }
-.text-6xl { font-size: var(--fs-6xl) !important; }
+/* Small / UI text */
+.text-\[8px\]  { font-size: calc(var(--b-8)  * var(--scale-global) * var(--scale-ui)) !important; }
+.text-\[9px\]  { font-size: calc(var(--b-9)  * var(--scale-global) * var(--scale-ui)) !important; }
+
+/* Body / labels */
+.text-\[10px\] { font-size: calc(var(--b-10) * var(--scale-global) * var(--scale-body)) !important; }
+.text-\[11px\] { font-size: calc(var(--b-11) * var(--scale-global) * var(--scale-body)) !important; }
+
+.text-base      { font-size: calc(var(--b-base) * var(--scale-global) * var(--scale-body)) !important; }
+.text-lg        { font-size: calc(var(--b-lg)   * var(--scale-global) * var(--scale-body)) !important; }
+.text-xl        { font-size: calc(var(--b-xl)   * var(--scale-global) * var(--scale-body)) !important; }
+
+/* Headings */
+.text-3xl       { font-size: calc(var(--b-3xl)  * var(--scale-global) * var(--scale-headings)) !important; }
+.text-4xl       { font-size: calc(var(--b-4xl)  * var(--scale-global) * var(--scale-headings)) !important; }
+.text-6xl       { font-size: calc(var(--b-6xl)  * var(--scale-global) * var(--scale-headings)) !important; }
 
 /* Responsive md: variant used in markup (Tailwind md breakpoint = 768px) */
 @media (min-width: 768px) {
-  .md\:text-6xl { font-size: var(--fs-6xl) !important; }
+  .md\:text-6xl { font-size: calc(var(--b-6xl) * var(--scale-global) * var(--scale-headings)) !important; }
 }
 
-/* Optional helper classes to reference tokens directly */
-.fs-8 { font-size: var(--fs-8px); }
-.fs-9 { font-size: var(--fs-9px); }
-.fs-10 { font-size: var(--fs-10px); }
-.fs-11 { font-size: var(--fs-11px); }
-.fs-base { font-size: var(--fs-base); }
-.fs-lg { font-size: var(--fs-lg); }
-.fs-xl { font-size: var(--fs-xl); }
-.fs-3xl { font-size: var(--fs-3xl); }
-.fs-4xl { font-size: var(--fs-4xl); }
-.fs-6xl { font-size: var(--fs-6xl); }
+/* Small helper classes (optional) */
+.fs-8 { font-size: calc(var(--b-8)  * var(--scale-global) * var(--scale-ui)); }
+.fs-9 { font-size: calc(var(--b-9)  * var(--scale-global) * var(--scale-ui)); }
+.fs-10{ font-size: calc(var(--b-10) * var(--scale-global) * var(--scale-body)); }
+.fs-11{ font-size: calc(var(--b-11) * var(--scale-global) * var(--scale-body)); }
+.fs-base{font-size: calc(var(--b-base) * var(--scale-global) * var(--scale-body)); }
+.fs-3xl{ font-size: calc(var(--b-3xl) * var(--scale-global) * var(--scale-headings)); }
 
-/* Fluid headings kept for compatibility (map to tokens) */
+/* Keep fluid heading utilities for compatibility */
 .fluid-h1 { font-size: clamp(2.5rem, 8vw, 6rem); }
 .fluid-h2 { font-size: clamp(2rem, 5vw, 4rem); }
+
+/* Section heading large (Portfolio, About, Clients, Contact, etc.) */
+.section-heading-large { font-size: calc(var(--b-11) * var(--scale-global) * var(--scale-section-headings)) !important; }

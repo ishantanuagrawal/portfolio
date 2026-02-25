@@ -182,7 +182,7 @@ const App = () => {
           <div className="text-xl md:text-2xl font-bold tracking-tighter cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
             SBS<span className="text-zinc-400">MEDIA</span>
           </div>
-          <div className="hidden md:flex space-x-10 text-[11px] font-bold tracking-widest uppercase text-zinc-400">
+          <div className="hidden md:flex space-x-10 text-[11px] font-bold tracking-widest uppercase text-zinc-400 section-heading-large">
             <button onClick={() => {setActiveTab('photography'); scrollWithOffset('portfolio')}} className="hover:text-zinc-900 transition-colors">Portfolio</button>
             <button onClick={() => scrollWithOffset('about')} className="hover:text-zinc-900 transition-colors">About</button>
             <button onClick={() => scrollWithOffset('clients')} className="hover:text-zinc-900 transition-colors">Clients</button>
@@ -212,7 +212,7 @@ const App = () => {
       <main id="portfolio" className="max-w-7xl mx-auto px-6 pb-24 border-t border-zinc-100 pt-10">
         <div className="flex space-x-10 mb-10 border-b border-zinc-100 overflow-x-auto no-scrollbar">
           {['photography', 'videography', 'reels'].map((tab) => (
-            <button key={tab} onClick={() => {setActiveTab(tab); setPhotoFilter('all'); setVideoFilter('all')}} className={`pb-4 text-[11px] uppercase tracking-widest transition-all relative font-bold ${activeTab === tab ? 'text-zinc-900' : 'text-zinc-400'}`}>
+            <button key={tab} onClick={() => {setActiveTab(tab); setPhotoFilter('all'); setVideoFilter('all')}} className={`pb-4 text-[11px] uppercase tracking-widest transition-all relative font-bold section-heading-large ${activeTab === tab ? 'text-zinc-900' : 'text-zinc-400'}`}>
               {tab}
               {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-900" />}
             </button>
