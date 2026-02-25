@@ -1,17 +1,17 @@
 :root {
-  /* Font size tokens (change these values to update site-wide) */
-  --fs-8px: 8px;
-  --fs-9px: 9px;
-  --fs-10px: 10px;
-  --fs-11px: 11px;
+  /* Font size tokens (doubled values site-wide) */
+  --fs-8px: 16px; /* doubled from 8px */
+  --fs-9px: 18px; /* doubled from 9px */
+  --fs-10px: 20px; /* doubled from 10px */
+  --fs-11px: 22px; /* doubled from 11px */
 
-  --fs-base: 16px; /* text-base */
-  --fs-lg: 18px;   /* text-lg */
-  --fs-xl: 20px;   /* text-xl */
+  --fs-base: 32px; /* doubled from 16px (text-base) */
+  --fs-lg: 36px;   /* doubled from 18px (text-lg) */
+  --fs-xl: 40px;   /* doubled from 20px (text-xl) */
 
-  --fs-3xl: 30px;  /* text-3xl approx */
-  --fs-4xl: 40px;  /* text-4xl approx */
-  --fs-6xl: 96px;  /* text-6xl (md variant used in markup) */
+  --fs-3xl: 60px;  /* doubled from 30px (text-3xl) */
+  --fs-4xl: 80px;  /* doubled from 40px (text-4xl) */
+  --fs-6xl: 192px; /* doubled from 96px (text-6xl) */
 }
 
 /* Map explicit bracketed Tailwind classes used in the app to variables */
