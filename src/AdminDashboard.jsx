@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 const ADMIN_TOKEN_STORAGE_KEY = 'sbs_admin_token';
 const DEFAULT_APPS_SCRIPT_ENDPOINT =
   'https://script.google.com/macros/s/AKfycbzvLzaUrInWabO28UyDN-IaOejbtUcjl-y7S-wcmefgIagqyDeOqjrlphNvFKMoW66ECA/exec';
+const DEFAULT_GOOGLE_SHEET_ID = '1ui5NKrhdWafk8nxPBbqxqQonGYU1dAQuN-LZmQUmtSw';
+const GOOGLE_SHEET_ID = import.meta.env.VITE_GOOGLE_SHEET_ID || DEFAULT_GOOGLE_SHEET_ID;
 
 const normalizeRows = (payload, fallbackType) => {
   if (!payload) return [];
@@ -93,6 +95,28 @@ const requestViaJsonp = (baseUrl, params = {}) =>
     document.body.appendChild(script);
   });
 
+const fetchSheetTabViaGviz = async (sheetId, tabName) => {
+  const callbackName = `sbsGvizCb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const gvizUrl = new URL(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq`);
+  gvizUrl.searchParams.set('sheet', tabName);
+  gvizUrl.searchParams.set('headers', '1');
+  gvizUrl.searchParams.set('tqx', `out:json;responseHandler:${callbackName}`);
+
+  const payload = await requestViaJsonp(gvizUrl.toString());
+  const table = payload?.table;
+  if (!table?.cols || !table?.rows) return [];
+
+  const headers = table.cols.map((col) => col.label || col.id || '');
+  return table.rows.map((row) => {
+    const obj = {};
+    headers.forEach((header, idx) => {
+      const cell = row.c?.[idx];
+      obj[header || `col_${idx}`] = cell?.f ?? cell?.v ?? '';
+    });
+    return obj;
+  });
+};
+
 const AdminDashboard = () => {
   const endpoint =
     import.meta.env.VITE_ADMIN_DATA_ENDPOINT ||
@@ -182,25 +206,34 @@ const AdminDashboard = () => {
     setErrorMessage('');
 
     try {
-      const requestUrl = buildRequestUrl(endpoint, accessToken);
-      const data = await requestViaJsonp(requestUrl);
-
-      const normalizedClientRows = normalizeRows(
-        data.clientRows || data.client || data.client_form_data || data.ClientFormData,
-        'client'
-      );
-      const normalizedTeamRows = normalizeRows(
-        data.teamRows || data.team || data.team_form_data || data.TeamFormData,
-        'team'
-      );
-
-      if (!normalizedClientRows.length && !normalizedTeamRows.length && Array.isArray(data.rows)) {
-        const flattened = normalizeRows(data.rows, 'all');
-        setClientRows(flattened.filter((row) => String(row.form_type || '').toLowerCase().includes('client')));
-        setTeamRows(flattened.filter((row) => String(row.form_type || '').toLowerCase().includes('team')));
+      if (GOOGLE_SHEET_ID) {
+        const [directClientRows, directTeamRows] = await Promise.all([
+          fetchSheetTabViaGviz(GOOGLE_SHEET_ID, 'ClientFormData'),
+          fetchSheetTabViaGviz(GOOGLE_SHEET_ID, 'TeamFormData')
+        ]);
+        setClientRows(directClientRows.map((row) => ({ ...row, form_type: 'client' })));
+        setTeamRows(directTeamRows.map((row) => ({ ...row, form_type: 'team' })));
       } else {
-        setClientRows(normalizedClientRows);
-        setTeamRows(normalizedTeamRows);
+        const requestUrl = buildRequestUrl(endpoint, accessToken);
+        const data = await requestViaJsonp(requestUrl);
+
+        const normalizedClientRows = normalizeRows(
+          data.clientRows || data.client || data.client_form_data || data.ClientFormData,
+          'client'
+        );
+        const normalizedTeamRows = normalizeRows(
+          data.teamRows || data.team || data.team_form_data || data.TeamFormData,
+          'team'
+        );
+
+        if (!normalizedClientRows.length && !normalizedTeamRows.length && Array.isArray(data.rows)) {
+          const flattened = normalizeRows(data.rows, 'all');
+          setClientRows(flattened.filter((row) => String(row.form_type || '').toLowerCase().includes('client')));
+          setTeamRows(flattened.filter((row) => String(row.form_type || '').toLowerCase().includes('team')));
+        } else {
+          setClientRows(normalizedClientRows);
+          setTeamRows(normalizedTeamRows);
+        }
       }
     } catch (error) {
       setErrorMessage(error.message || 'Failed to load submissions.');
