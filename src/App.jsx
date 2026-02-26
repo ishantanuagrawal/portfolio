@@ -20,7 +20,7 @@ const App = () => {
   const [videoFilter, setVideoFilter] = useState('all');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [lightboxContent, setLightboxContent] = useState(null); // { type: 'image'|'iframe', src?, html? }
+  const [lightboxContent, setLightboxContent] = useState(null); // { type: 'image'|'iframe', src? }
   const [joinUsModal, setJoinUsModal] = useState(false); // show choice modal
   const [joinUsType, setJoinUsType] = useState(null); // 'client' | 'team'
   const [successMessage, setSuccessMessage] = useState(null);
@@ -196,14 +196,21 @@ const App = () => {
 
   const formatLabel = (str) => str ? str.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : '';
 
-  const makeIframeHtml = (src) => {
+  const extractIframeSrc = (iframeHtml) => {
+    const match = iframeHtml.match(/src=["']([^"']+)["']/i);
+    return match?.[1] || null;
+  };
+
+  const normalizeEmbedSrc = (src) => {
     if (!src) return null;
     let url = src.trim();
     if (url.includes('watch?v=')) url = url.replace('watch?v=', 'embed/');
     if (url.includes('youtu.be/')) url = url.replace('youtu.be/', 'www.youtube.com/embed/');
-    // if it's already an iframe HTML, return as-is
-    if (url.startsWith('<iframe')) return url;
-    return `<iframe src="${url}" width="960" height="540" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    if (url.startsWith('<iframe')) {
+      const iframeSrc = extractIframeSrc(url);
+      return iframeSrc ? normalizeEmbedSrc(iframeSrc) : null;
+    }
+    return url;
   };
 
   const handleVideoClick = (video) => {
@@ -211,8 +218,8 @@ const App = () => {
     if (video.externalLink) {
       const ext = video.externalLink;
       if (ext.trim().startsWith('<iframe') || ext.includes('youtube') || ext.includes('youtu.be')) {
-        const html = ext.trim().startsWith('<iframe') ? ext : makeIframeHtml(ext);
-        setLightboxContent({ type: 'iframe', html });
+        const src = normalizeEmbedSrc(ext);
+        if (src) setLightboxContent({ type: 'iframe', src });
       } else {
         window.open(ext, '_blank');
       }
@@ -601,8 +608,23 @@ const App = () => {
                 alt="Preview"
               />
             )}
-            {lightboxContent.type === 'iframe' && (
-              <div className="max-h-[90vh] max-w-[90vw] animate-fade-in" dangerouslySetInnerHTML={{ __html: lightboxContent.html }} />
+            {lightboxContent.type === 'iframe' && lightboxContent.src && (
+              <div
+                className="animate-fade-in"
+                style={{
+                  width: 'min(96vw, calc(90vh * 16 / 9))',
+                  aspectRatio: '16 / 9'
+                }}
+              >
+                <iframe
+                  src={lightboxContent.src}
+                  title="Video Preview"
+                  className="w-full h-full rounded-sm"
+                  style={{ border: 0 }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             )}
             <button
               className="absolute top-0 right-0 text-white text-3xl p-2"
