@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 const ADMIN_TOKEN_STORAGE_KEY = 'sbs_admin_token';
+const DEFAULT_APPS_SCRIPT_ENDPOINT =
+  'https://script.google.com/macros/s/AKfycbzvLzaUrInWabO28UyDN-IaOejbtUcjl-y7S-wcmefgIagqyDeOqjrlphNvFKMoW66ECA/exec';
 
 const normalizeRows = (payload, fallbackType) => {
   if (!payload) return [];
@@ -51,7 +53,10 @@ const buildRequestUrl = (baseUrl, token) => {
 };
 
 const AdminDashboard = () => {
-  const endpoint = import.meta.env.VITE_ADMIN_DATA_ENDPOINT || import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL;
+  const endpoint =
+    import.meta.env.VITE_ADMIN_DATA_ENDPOINT ||
+    import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL ||
+    DEFAULT_APPS_SCRIPT_ENDPOINT;
   const [tokenInput, setTokenInput] = useState('');
   const [token, setToken] = useState(() => sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || '');
   const [activeTab, setActiveTab] = useState('all');
