@@ -13,7 +13,7 @@ Thanks for contacting SBS Media. We have received your project inquiry and will 
 
 Thanks for applying to SBS Media. We have received your application and our team will review it.
 
-- SBS Media`
+- SBS Media, (Shantanu )`
   }
 };
 
