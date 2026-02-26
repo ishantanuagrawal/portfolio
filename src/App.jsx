@@ -692,7 +692,7 @@ const App = () => {
                 onClick={() => { setErrorMessage(null); setJoinUsType('client'); }}
                 className="w-full bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors smooth-btn"
               >
-                Looking for Videographer / Photography Services
+                Book a Shoot
               </button>
               <button
                 onClick={() => { setErrorMessage(null); setJoinUsType('team'); }}
