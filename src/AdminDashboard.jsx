@@ -95,27 +95,60 @@ const requestViaJsonp = (baseUrl, params = {}) =>
     document.body.appendChild(script);
   });
 
-const fetchSheetTabViaGviz = async (sheetId, tabName) => {
-  const callbackName = `sbsGvizCb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const gvizUrl = new URL(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq`);
-  gvizUrl.searchParams.set('sheet', tabName);
-  gvizUrl.searchParams.set('headers', '1');
-  gvizUrl.searchParams.set('tqx', `out:json;responseHandler:${callbackName}`);
+const fetchSheetTabViaGviz = (sheetId, tabName) =>
+  new Promise((resolve, reject) => {
+    const callbackName = `sbsGvizCb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const gvizUrl = new URL(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq`);
+    gvizUrl.searchParams.set('sheet', tabName);
+    gvizUrl.searchParams.set('headers', '1');
+    gvizUrl.searchParams.set('tqx', `out:json;responseHandler:${callbackName}`);
 
-  const payload = await requestViaJsonp(gvizUrl.toString());
-  const table = payload?.table;
-  if (!table?.cols || !table?.rows) return [];
+    let timeoutId = null;
+    const script = document.createElement('script');
 
-  const headers = table.cols.map((col) => col.label || col.id || '');
-  return table.rows.map((row) => {
-    const obj = {};
-    headers.forEach((header, idx) => {
-      const cell = row.c?.[idx];
-      obj[header || `col_${idx}`] = cell?.f ?? cell?.v ?? '';
-    });
-    return obj;
+    const cleanup = () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try {
+        delete window[callbackName];
+      } catch (_) {
+        window[callbackName] = undefined;
+      }
+    };
+
+    window[callbackName] = (payload) => {
+      cleanup();
+      const table = payload?.table;
+      if (!table?.cols || !table?.rows) {
+        resolve([]);
+        return;
+      }
+
+      const headers = table.cols.map((col) => col.label || col.id || '');
+      const rows = table.rows.map((row) => {
+        const obj = {};
+        headers.forEach((header, idx) => {
+          const cell = row.c?.[idx];
+          obj[header || `col_${idx}`] = cell?.f ?? cell?.v ?? '';
+        });
+        return obj;
+      });
+      resolve(rows);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('Failed to fetch admin data.'));
+    };
+
+    timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error('Admin request timed out.'));
+    }, 12000);
+
+    script.src = gvizUrl.toString();
+    document.body.appendChild(script);
   });
-};
 
 const AdminDashboard = () => {
   const endpoint =
