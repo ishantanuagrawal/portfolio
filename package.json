@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "make-small": "node ./scripts/make-small-assets.js"
+    "make-small": "node ./scripts/make-small-assets.js",
+    "resize-and-push": "sh ./scripts/resize-and-push.sh"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
