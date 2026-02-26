@@ -23,6 +23,7 @@ const App = () => {
   const [joinUsModal, setJoinUsModal] = useState(false); // show choice modal
   const [joinUsType, setJoinUsType] = useState(null); // 'client' | 'team'
   const [successMessage, setSuccessMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [clientForm, setClientForm] = useState({
     name: '',
@@ -46,6 +47,9 @@ const App = () => {
     intro: '',
     resume: null
   });
+  const SHEET_WEBHOOK_URL = import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL || '';
+  const CLIENT_FORM_ENDPOINT = import.meta.env.VITE_CLIENT_FORM_ENDPOINT || 'https://formsubmit.co/ajax/hello@sbsmedia.co.in';
+  const TEAM_FORM_ENDPOINT = import.meta.env.VITE_TEAM_FORM_ENDPOINT || 'https://formsubmit.co/ajax/hello@sbsmedia.co.in';
 
   // --- AUTOMATED ASSET LOADER ---
   const REPO = useMemo(() => {
@@ -223,46 +227,134 @@ const App = () => {
     }
   };
 
-  const handleClientSubmit = (e) => {
+  const closeJoinUsAndReset = () => {
+    setJoinUsType(null);
+    setJoinUsModal(false);
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    setClientForm({ name: '', company: '', email: '', phone: '', serviceType: '', projectDescription: '', budget: '', timeline: '' });
+    setTeamForm({ name: '', email: '', phone: '', role: '', experience: '', portfolioLink: '', location: '', availability: '', intro: '', resume: null });
+  };
+
+  const submitFormData = async (endpoint, payload) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      body: payload
+    });
+    const responseData = await response.json().catch(() => ({}));
+    if (!response.ok || responseData?.success === 'false') {
+      throw new Error(responseData?.message || 'Submission failed. Please try again.');
+    }
+    return responseData;
+  };
+
+  const submitToSheetWebhook = async (payload) => {
+    // Using text/plain avoids CORS preflight headaches for simple Apps Script webhooks.
+    await fetch(SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+  };
+
+  const handleClientSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage(null);
     if (!clientForm.name || !clientForm.email || !clientForm.serviceType || !clientForm.budget) {
       alert('Please fill in all required fields.');
       return;
     }
-    setSubmitting(true);
-    console.log('Client form submitted:', clientForm);
-    // TODO: send email with clientForm data
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      setSubmitting(true);
+      const clientPayload = {
+        form_type: 'Client Inquiry',
+        submitted_at: new Date().toISOString(),
+        name: clientForm.name,
+        company: clientForm.company,
+        email: clientForm.email,
+        phone: clientForm.phone,
+        service_type: clientForm.serviceType,
+        project_description: clientForm.projectDescription,
+        budget: clientForm.budget,
+        timeline: clientForm.timeline
+      };
+
+      if (SHEET_WEBHOOK_URL) {
+        await submitToSheetWebhook(clientPayload);
+      } else {
+        const payload = new FormData();
+        payload.append('form_type', 'Client Inquiry');
+        payload.append('_subject', `New Client Inquiry: ${clientForm.name}`);
+        payload.append('name', clientForm.name);
+        payload.append('company', clientForm.company);
+        payload.append('email', clientForm.email);
+        payload.append('phone', clientForm.phone);
+        payload.append('service_type', clientForm.serviceType);
+        payload.append('project_description', clientForm.projectDescription);
+        payload.append('budget', clientForm.budget);
+        payload.append('timeline', clientForm.timeline);
+        await submitFormData(CLIENT_FORM_ENDPOINT, payload);
+      }
       setSuccessMessage('Thank you! Our team will contact you shortly.');
-      setTimeout(() => {
-        setJoinUsType(null);
-        setJoinUsModal(false);
-        setSuccessMessage(null);
-        setClientForm({ name: '', company: '', email: '', phone: '', serviceType: '', projectDescription: '', budget: '', timeline: '' });
-      }, 2000);
-    }, 500);
+      setTimeout(() => closeJoinUsAndReset(), 2000);
+    } catch (error) {
+      setErrorMessage(error.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleTeamSubmit = (e) => {
+  const handleTeamSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage(null);
     if (!teamForm.name || !teamForm.email || !teamForm.role || !teamForm.experience) {
       alert('Please fill in all required fields.');
       return;
     }
-    setSubmitting(true);
-    console.log('Team form submitted:', teamForm);
-    // TODO: send email with teamForm data
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      setSubmitting(true);
+      const teamPayload = {
+        form_type: 'Team Application',
+        submitted_at: new Date().toISOString(),
+        name: teamForm.name,
+        email: teamForm.email,
+        phone: teamForm.phone,
+        role: teamForm.role,
+        experience: teamForm.experience,
+        availability: teamForm.availability,
+        portfolio_link: teamForm.portfolioLink,
+        location: teamForm.location,
+        intro: teamForm.intro,
+        resume_file_name: teamForm.resume?.name || ''
+      };
+
+      if (SHEET_WEBHOOK_URL) {
+        await submitToSheetWebhook(teamPayload);
+      } else {
+        const payload = new FormData();
+        payload.append('form_type', 'Team Application');
+        payload.append('_subject', `New Team Application: ${teamForm.name}`);
+        payload.append('name', teamForm.name);
+        payload.append('email', teamForm.email);
+        payload.append('phone', teamForm.phone);
+        payload.append('role', teamForm.role);
+        payload.append('experience', teamForm.experience);
+        payload.append('availability', teamForm.availability);
+        payload.append('portfolio_link', teamForm.portfolioLink);
+        payload.append('location', teamForm.location);
+        payload.append('intro', teamForm.intro);
+        if (teamForm.resume) payload.append('resume', teamForm.resume);
+        await submitFormData(TEAM_FORM_ENDPOINT, payload);
+      }
       setSuccessMessage("Thanks! We'll review your profile and contact you if there's a match.");
-      setTimeout(() => {
-        setJoinUsType(null);
-        setJoinUsModal(false);
-        setSuccessMessage(null);
-        setTeamForm({ name: '', email: '', phone: '', role: '', experience: '', portfolioLink: '', location: '', availability: '', intro: '', resume: null });
-      }, 2000);
-    }, 500);
+      setTimeout(() => closeJoinUsAndReset(), 2000);
+    } catch (error) {
+      setErrorMessage(error.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -522,27 +614,27 @@ const App = () => {
       {joinUsModal && !joinUsType && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setJoinUsModal(false)}
+          onClick={closeJoinUsAndReset}
         >
           <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold mb-6 text-zinc-900">Join SBS Media</h2>
             <p className="text-zinc-500 mb-6">What brings you here?</p>
             <div className="space-y-4">
               <button
-                onClick={() => setJoinUsType('client')}
+                onClick={() => { setErrorMessage(null); setJoinUsType('client'); }}
                 className="w-full bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors"
               >
                 Looking for Videographer / Photography Services
               </button>
               <button
-                onClick={() => setJoinUsType('team')}
+                onClick={() => { setErrorMessage(null); setJoinUsType('team'); }}
                 className="w-full border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
               >
                 Looking to Join Our Team
               </button>
             </div>
             <button
-              onClick={() => setJoinUsModal(false)}
+              onClick={closeJoinUsAndReset}
               className="mt-6 w-full text-zinc-400 text-sm hover:text-zinc-600"
             >
               Close
@@ -555,14 +647,15 @@ const App = () => {
       {joinUsModal && joinUsType === 'client' && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto"
-          onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+          onClick={closeJoinUsAndReset}
         >
           <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-zinc-900">Start Your Project</h2>
-              <button onClick={() => { setJoinUsType(null); setJoinUsModal(false); }} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
+              <button onClick={closeJoinUsAndReset} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
             </div>
             <form onSubmit={handleClientSubmit} className="space-y-4">
+              {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -649,7 +742,7 @@ const App = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+                  onClick={closeJoinUsAndReset}
                   className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
                 >
                   Cancel
@@ -664,14 +757,15 @@ const App = () => {
       {joinUsModal && joinUsType === 'team' && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto"
-          onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+          onClick={closeJoinUsAndReset}
         >
           <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-zinc-900">Join Our Team</h2>
-              <button onClick={() => { setJoinUsType(null); setJoinUsModal(false); }} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
+              <button onClick={closeJoinUsAndReset} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
             </div>
             <form onSubmit={handleTeamSubmit} className="space-y-4">
+              {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -787,7 +881,7 @@ const App = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+                  onClick={closeJoinUsAndReset}
                   className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
                 >
                   Cancel
