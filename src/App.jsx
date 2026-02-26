@@ -19,7 +19,7 @@ const App = () => {
   const [videoFilter, setVideoFilter] = useState('all');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [lightboxUrl, setLightboxUrl] = useState(null);
+  const [lightboxContent, setLightboxContent] = useState(null); // { type: 'image'|'iframe', src?, html? }
 
   // --- AUTOMATED ASSET LOADER ---
   const REPO = useMemo(() => {
@@ -37,7 +37,7 @@ const App = () => {
       // Videography: Thumbnails/Images in subdirectories
       videoModules = import.meta.glob('/public/assets/videography/*/*.{avif,png,jpg,jpeg,webp,mp4,webm}', { eager: true });
       
-      // Videography Links: .txt files containing the redirect URLs
+      // Videography Links: .txt files containing the redirect URLs (per-file)
       videoTxtModules = import.meta.glob('/public/assets/videography/*/*.txt', { query: '?raw', import: 'default', eager: true });
       
       // Reels: Flat directory assets
@@ -73,7 +73,7 @@ const App = () => {
           smallUrl = browserUrl.replace('/assets/photography/', '/assets/small_assets/photography/');
         }
 
-        // Look for matching .txt file to extract redirect link
+        // Look for matching .txt file to extract redirect/iframe link (per-file)
         let externalLink = null;
         if (isVideo) {
           const txtPath = path.substring(0, path.lastIndexOf('.')) + '.txt';
@@ -166,14 +166,34 @@ const App = () => {
 
   const formatLabel = (str) => str ? str.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : '';
 
+  const makeIframeHtml = (src) => {
+    if (!src) return null;
+    let url = src.trim();
+    if (url.includes('watch?v=')) url = url.replace('watch?v=', 'embed/');
+    if (url.includes('youtu.be/')) url = url.replace('youtu.be/', 'www.youtube.com/embed/');
+    // if it's already an iframe HTML, return as-is
+    if (url.startsWith('<iframe')) return url;
+    return `<iframe src="${url}" width="960" height="540" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  };
+
   const handleVideoClick = (video) => {
+    // If there's a mapping (json or txt) open it immediately as iframe (or external)
+    if (video.externalLink) {
+      const ext = video.externalLink;
+      if (ext.trim().startsWith('<iframe') || ext.includes('youtube') || ext.includes('youtu.be')) {
+        const html = ext.trim().startsWith('<iframe') ? ext : makeIframeHtml(ext);
+        setLightboxContent({ type: 'iframe', html });
+      } else {
+        window.open(ext, '_blank');
+      }
+      return;
+    }
+
+    // No mapping: if in 'all' view, drill down to category; otherwise show local preview
     if (videoFilter === 'all') {
       setVideoFilter(video.dir);
-    } else if (video.externalLink) {
-      window.open(video.externalLink, '_blank');
     } else {
-      // local thumbnail clicked, open lightbox
-      setLightboxUrl(video.url);
+      setLightboxContent({ type: 'image', src: video.url });
     }
   };
 
@@ -254,7 +274,7 @@ const App = () => {
                       if (photoFilter === 'all') {
                         setPhotoFilter(photo.dir);
                       } else {
-                        setLightboxUrl(photo.url);
+                        setLightboxContent({ type: 'image', src: photo.url });
                       }
                     }}>
                   <img src={photo.smallUrl ?? photo.url} alt={photo.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -315,14 +335,14 @@ const App = () => {
         {activeTab === 'reels' && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
             {REPO.reels.map((reel) => (
-              <div 
+                <div 
                 key={reel.id} 
                 className="group relative aspect-[9/16] overflow-hidden bg-zinc-100 rounded-sm shadow-sm cursor-pointer"
                 onClick={() => {
                   if (reel.externalLink) {
                     window.open(reel.externalLink, '_blank');
                   } else {
-                    setLightboxUrl(reel.url);
+                    setLightboxContent({ type: 'image', src: reel.url });
                   }
                 }}
               >
@@ -363,7 +383,7 @@ const App = () => {
                src={REPO.intro}
                className="w-full h-full object-cover relative z-10 shadow-2xl transition-all duration-700 cursor-pointer"
                alt="Shantanu"
-               onClick={() => setLightboxUrl(REPO.intro)}
+               onClick={() => setLightboxContent({ type: 'image', src: REPO.intro })}
              />
           </div>
         </div>
@@ -395,21 +415,26 @@ const App = () => {
         </p>
       </footer>
 
-      {/* lightbox overlay */}
-      {lightboxUrl && (
+      {/* lightbox overlay (supports images and iframe HTML) */}
+      {lightboxContent && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setLightboxUrl(null)}
+          onClick={() => setLightboxContent(null)}
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={lightboxUrl}
-              className="max-h-[90vh] max-w-[90vw] object-contain animate-fade-in"
-              alt="Preview"
-            />
+            {lightboxContent.type === 'image' && (
+              <img
+                src={lightboxContent.src}
+                className="max-h-[90vh] max-w-[90vw] object-contain animate-fade-in"
+                alt="Preview"
+              />
+            )}
+            {lightboxContent.type === 'iframe' && (
+              <div className="max-h-[90vh] max-w-[90vw] animate-fade-in" dangerouslySetInnerHTML={{ __html: lightboxContent.html }} />
+            )}
             <button
               className="absolute top-0 right-0 text-white text-3xl p-2"
-              onClick={() => setLightboxUrl(null)}
+              onClick={() => setLightboxContent(null)}
             >
               ×
             </button>
