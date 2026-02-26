@@ -44,8 +44,7 @@ const App = () => {
     portfolioLink: '',
     location: '',
     availability: '',
-    intro: '',
-    resume: null
+    intro: ''
   });
   const SHEET_WEBHOOK_URL = import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbzzQC8bX92FajirMjyh6OnhA9NfOiO0Qn6V6nA6WNwuQc1jFzLU09bmDKhqwLyyLmJrBQ/exec';
   const CLIENT_FORM_ENDPOINT = import.meta.env.VITE_CLIENT_FORM_ENDPOINT || 'https://formsubmit.co/ajax/hello@sbsmedia.co.in';
@@ -233,7 +232,7 @@ const App = () => {
     setSuccessMessage(null);
     setErrorMessage(null);
     setClientForm({ name: '', company: '', email: '', phone: '', serviceType: '', projectDescription: '', budget: '', timeline: '' });
-    setTeamForm({ name: '', email: '', phone: '', role: '', experience: '', portfolioLink: '', location: '', availability: '', intro: '', resume: null });
+    setTeamForm({ name: '', email: '', phone: '', role: '', experience: '', portfolioLink: '', location: '', availability: '', intro: '' });
   };
 
   const submitFormData = async (endpoint, payload) => {
@@ -258,21 +257,6 @@ const App = () => {
       body: JSON.stringify(payload)
     });
   };
-
-  const fileToBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
-      if (typeof dataUrl !== 'string') {
-        reject(new Error('Failed to read file data.'));
-        return;
-      }
-      const base64 = dataUrl.split(',')[1] || '';
-      resolve(base64);
-    };
-    reader.onerror = () => reject(new Error('Could not read selected file.'));
-    reader.readAsDataURL(file);
-  });
 
   const handleClientSubmit = async (e) => {
     e.preventDefault();
@@ -341,21 +325,10 @@ const App = () => {
         availability: teamForm.availability,
         portfolio_link: teamForm.portfolioLink,
         location: teamForm.location,
-        intro: teamForm.intro,
-        resume_file_name: teamForm.resume?.name || '',
-        resume_mime_type: teamForm.resume?.type || '',
-        resume_base64: ''
+        intro: teamForm.intro
       };
 
       if (SHEET_WEBHOOK_URL) {
-        if (teamForm.resume) {
-          // Keep payload within practical limits for Apps Script web apps.
-          const maxResumeSizeBytes = 5 * 1024 * 1024;
-          if (teamForm.resume.size > maxResumeSizeBytes) {
-            throw new Error('Resume must be 5MB or smaller.');
-          }
-          teamPayload.resume_base64 = await fileToBase64(teamForm.resume);
-        }
         await submitToSheetWebhook(teamPayload);
       } else {
         const payload = new FormData();
@@ -370,7 +343,6 @@ const App = () => {
         payload.append('portfolio_link', teamForm.portfolioLink);
         payload.append('location', teamForm.location);
         payload.append('intro', teamForm.intro);
-        if (teamForm.resume) payload.append('resume', teamForm.resume);
         await submitFormData(TEAM_FORM_ENDPOINT, payload);
       }
       setSuccessMessage("Thanks! We'll review your profile and contact you if there's a match.");
@@ -880,22 +852,6 @@ const App = () => {
                 className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
                 rows="3"
               />
-              <div className="border-2 border-dashed border-zinc-300 rounded-lg p-4 text-center cursor-pointer hover:border-zinc-500 transition-colors">
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) => setTeamForm({ ...teamForm, resume: e.target.files?.[0] || null })}
-                  className="hidden"
-                  id="resume-upload"
-                />
-                <label htmlFor="resume-upload" className="cursor-pointer">
-                  {teamForm.resume ? (
-                    <p className="text-sm text-zinc-600"><strong>{teamForm.resume.name}</strong> uploaded</p>
-                  ) : (
-                    <p className="text-sm text-zinc-500">Resume Upload (optional)<br />Drag and drop or click to browse</p>
-                  )}
-                </label>
-              </div>
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
