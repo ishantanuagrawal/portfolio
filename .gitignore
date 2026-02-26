@@ -33,3 +33,6 @@ Thumbs.db
 # Optional: Coverage reports (if you run tests)
 coverage/
 *.lcov
+
+# Google Sheets service account key (do not commit)
+credentials.json

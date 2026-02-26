@@ -20,6 +20,32 @@ const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [lightboxContent, setLightboxContent] = useState(null); // { type: 'image'|'iframe', src?, html? }
+  const [joinUsModal, setJoinUsModal] = useState(false); // show choice modal
+  const [joinUsType, setJoinUsType] = useState(null); // 'client' | 'team'
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [clientForm, setClientForm] = useState({
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    serviceType: '',
+    projectDescription: '',
+    budget: '',
+    timeline: ''
+  });
+  const [teamForm, setTeamForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: '',
+    experience: '',
+    portfolioLink: '',
+    location: '',
+    availability: '',
+    intro: '',
+    resume: null
+  });
 
   // --- AUTOMATED ASSET LOADER ---
   const REPO = useMemo(() => {
@@ -195,6 +221,48 @@ const App = () => {
     } else {
       setLightboxContent({ type: 'image', src: video.url });
     }
+  };
+
+  const handleClientSubmit = (e) => {
+    e.preventDefault();
+    if (!clientForm.name || !clientForm.email || !clientForm.serviceType || !clientForm.budget) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    setSubmitting(true);
+    console.log('Client form submitted:', clientForm);
+    // TODO: send email with clientForm data
+    setTimeout(() => {
+      setSubmitting(false);
+      setSuccessMessage('Thank you! Our team will contact you shortly.');
+      setTimeout(() => {
+        setJoinUsType(null);
+        setJoinUsModal(false);
+        setSuccessMessage(null);
+        setClientForm({ name: '', company: '', email: '', phone: '', serviceType: '', projectDescription: '', budget: '', timeline: '' });
+      }, 2000);
+    }, 500);
+  };
+
+  const handleTeamSubmit = (e) => {
+    e.preventDefault();
+    if (!teamForm.name || !teamForm.email || !teamForm.role || !teamForm.experience) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    setSubmitting(true);
+    console.log('Team form submitted:', teamForm);
+    // TODO: send email with teamForm data
+    setTimeout(() => {
+      setSubmitting(false);
+      setSuccessMessage("Thanks! We'll review your profile and contact you if there's a match.");
+      setTimeout(() => {
+        setJoinUsType(null);
+        setJoinUsModal(false);
+        setSuccessMessage(null);
+        setTeamForm({ name: '', email: '', phone: '', role: '', experience: '', portfolioLink: '', location: '', availability: '', intro: '', resume: null });
+      }, 2000);
+    }, 500);
   };
 
   return (
@@ -438,6 +506,307 @@ const App = () => {
             >
               ×
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Join Us Button - Fixed Bottom Right */}
+      <button
+        onClick={() => setJoinUsModal(true)}
+        className="fixed bottom-8 right-8 z-40 bg-gradient-to-r from-zinc-900 to-zinc-800 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold text-[13px] uppercase tracking-widest hover:scale-105"
+      >
+        Join Us
+      </button>
+
+      {/* Join Us Choice Modal */}
+      {joinUsModal && !joinUsType && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={() => setJoinUsModal(false)}
+        >
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-6 text-zinc-900">Join SBS Media</h2>
+            <p className="text-zinc-500 mb-6">What brings you here?</p>
+            <div className="space-y-4">
+              <button
+                onClick={() => setJoinUsType('client')}
+                className="w-full bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors"
+              >
+                Looking for Videographer / Photography Services
+              </button>
+              <button
+                onClick={() => setJoinUsType('team')}
+                className="w-full border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
+              >
+                Looking to Join Our Team
+              </button>
+            </div>
+            <button
+              onClick={() => setJoinUsModal(false)}
+              className="mt-6 w-full text-zinc-400 text-sm hover:text-zinc-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Client Form Modal */}
+      {joinUsModal && joinUsType === 'client' && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto"
+          onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+        >
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-zinc-900">Start Your Project</h2>
+              <button onClick={() => { setJoinUsType(null); setJoinUsModal(false); }} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
+            </div>
+            <form onSubmit={handleClientSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Full Name *"
+                  value={clientForm.name}
+                  onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Company / Brand Name"
+                  value={clientForm.company}
+                  onChange={(e) => setClientForm({ ...clientForm, company: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="email"
+                  placeholder="Email *"
+                  value={clientForm.email}
+                  onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={clientForm.phone}
+                  onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <select
+                  value={clientForm.serviceType}
+                  onChange={(e) => setClientForm({ ...clientForm, serviceType: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                >
+                  <option value="">Service Type *</option>
+                  <option value="reels">Social Media Reels</option>
+                  <option value="brandfilm">Brand Film</option>
+                  <option value="adshoot">Ad Shoot</option>
+                  <option value="event">Event Coverage</option>
+                  <option value="product">Product Shoot</option>
+                  <option value="other">Other</option>
+                </select>
+                <select
+                  value={clientForm.budget}
+                  onChange={(e) => setClientForm({ ...clientForm, budget: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                >
+                  <option value="">Budget *</option>
+                  <option value="under50k">Under ₹50,000</option>
+                  <option value="50-100k">₹50,000 – ₹1L</option>
+                  <option value="1-3l">₹1L – ₹3L</option>
+                  <option value="3lplus">₹3L+</option>
+                </select>
+              </div>
+              <textarea
+                placeholder="Project Description"
+                value={clientForm.projectDescription}
+                onChange={(e) => setClientForm({ ...clientForm, projectDescription: e.target.value })}
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                rows="3"
+              />
+              <input
+                type="date"
+                placeholder="Expected Timeline"
+                value={clientForm.timeline}
+                onChange={(e) => setClientForm({ ...clientForm, timeline: e.target.value })}
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+              />
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                >
+                  {submitting ? 'Submitting...' : 'Submit'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+                  className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Team Form Modal */}
+      {joinUsModal && joinUsType === 'team' && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto"
+          onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+        >
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-zinc-900">Join Our Team</h2>
+              <button onClick={() => { setJoinUsType(null); setJoinUsModal(false); }} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
+            </div>
+            <form onSubmit={handleTeamSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Full Name *"
+                  value={teamForm.name}
+                  onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email *"
+                  value={teamForm.email}
+                  onChange={(e) => setTeamForm({ ...teamForm, email: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={teamForm.phone}
+                  onChange={(e) => setTeamForm({ ...teamForm, phone: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                />
+                <select
+                  value={teamForm.role}
+                  onChange={(e) => setTeamForm({ ...teamForm, role: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                >
+                  <option value="">Role Applying For *</option>
+                  <option value="editor">Video Editor</option>
+                  <option value="videographer">Videographer</option>
+                  <option value="photographer">Photographer</option>
+                  <option value="motiongraphics">Motion Graphics Artist</option>
+                  <option value="content">Content Creator</option>
+                  <option value="intern">Intern</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <select
+                  value={teamForm.experience}
+                  onChange={(e) => setTeamForm({ ...teamForm, experience: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  required
+                >
+                  <option value="">Experience Level *</option>
+                  <option value="fresher">Fresher</option>
+                  <option value="1-2">1–2 Years</option>
+                  <option value="3-5">3–5 Years</option>
+                  <option value="5plus">5+ Years</option>
+                </select>
+                <select
+                  value={teamForm.availability}
+                  onChange={(e) => setTeamForm({ ...teamForm, availability: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                >
+                  <option value="">Availability</option>
+                  <option value="fulltime">Full-time</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="parttime">Part-time</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="url"
+                  placeholder="Portfolio Link (behance, instagram, website)"
+                  value={teamForm.portfolioLink}
+                  onChange={(e) => setTeamForm({ ...teamForm, portfolioLink: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                />
+                <input
+                  type="text"
+                  placeholder="Location"
+                  value={teamForm.location}
+                  onChange={(e) => setTeamForm({ ...teamForm, location: e.target.value })}
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                />
+              </div>
+              <textarea
+                placeholder="Short Introduction"
+                value={teamForm.intro}
+                onChange={(e) => setTeamForm({ ...teamForm, intro: e.target.value })}
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                rows="3"
+              />
+              <div className="border-2 border-dashed border-zinc-300 rounded-lg p-4 text-center cursor-pointer hover:border-zinc-500 transition-colors">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => setTeamForm({ ...teamForm, resume: e.target.files?.[0] || null })}
+                  className="hidden"
+                  id="resume-upload"
+                />
+                <label htmlFor="resume-upload" className="cursor-pointer">
+                  {teamForm.resume ? (
+                    <p className="text-sm text-zinc-600"><strong>{teamForm.resume.name}</strong> uploaded</p>
+                  ) : (
+                    <p className="text-sm text-zinc-500">Resume Upload (optional)<br />Drag and drop or click to browse</p>
+                  )}
+                </label>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                >
+                  {submitting ? 'Submitting...' : 'Submit'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setJoinUsType(null); setJoinUsModal(false); }}
+                  className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message Modal */}
+      {successMessage && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 animate-fade-in shadow-2xl text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">✓</span>
+            </div>
+            <h3 className="text-lg font-bold text-zinc-900 mb-2">Success!</h3>
+            <p className="text-zinc-500">{successMessage}</p>
           </div>
         </div>
       )}
