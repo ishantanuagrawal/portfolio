@@ -12,6 +12,7 @@ import {
   Globe,
   Smartphone
 } from 'lucide-react';
+import { buildAcknowledgementEmail } from './acknowledgementTemplates';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('photography');
@@ -267,6 +268,7 @@ const App = () => {
     }
     try {
       setSubmitting(true);
+      const clientAck = buildAcknowledgementEmail('client', clientForm.name);
       const clientPayload = {
         form_type: 'Client Inquiry',
         submitted_at: new Date().toISOString(),
@@ -277,7 +279,9 @@ const App = () => {
         service_type: clientForm.serviceType,
         project_description: clientForm.projectDescription,
         budget: clientForm.budget,
-        timeline: clientForm.timeline
+        timeline: clientForm.timeline,
+        ack_email_subject: clientAck.subject,
+        ack_email_body: clientAck.body
       };
 
       if (SHEET_WEBHOOK_URL) {
@@ -294,6 +298,8 @@ const App = () => {
         payload.append('project_description', clientForm.projectDescription);
         payload.append('budget', clientForm.budget);
         payload.append('timeline', clientForm.timeline);
+        payload.append('ack_email_subject', clientAck.subject);
+        payload.append('ack_email_body', clientAck.body);
         await submitFormData(CLIENT_FORM_ENDPOINT, payload);
       }
       setSuccessMessage('Thank you! Our team will contact you shortly.');
@@ -314,6 +320,7 @@ const App = () => {
     }
     try {
       setSubmitting(true);
+      const teamAck = buildAcknowledgementEmail('team', teamForm.name);
       const teamPayload = {
         form_type: 'Team Application',
         submitted_at: new Date().toISOString(),
@@ -325,7 +332,9 @@ const App = () => {
         availability: teamForm.availability,
         portfolio_link: teamForm.portfolioLink,
         location: teamForm.location,
-        intro: teamForm.intro
+        intro: teamForm.intro,
+        ack_email_subject: teamAck.subject,
+        ack_email_body: teamAck.body
       };
 
       if (SHEET_WEBHOOK_URL) {
@@ -343,6 +352,8 @@ const App = () => {
         payload.append('portfolio_link', teamForm.portfolioLink);
         payload.append('location', teamForm.location);
         payload.append('intro', teamForm.intro);
+        payload.append('ack_email_subject', teamAck.subject);
+        payload.append('ack_email_body', teamAck.body);
         await submitFormData(TEAM_FORM_ENDPOINT, payload);
       }
       setSuccessMessage("Thanks! We'll review your profile and contact you if there's a match.");
