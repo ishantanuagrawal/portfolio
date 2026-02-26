@@ -47,7 +47,7 @@ const App = () => {
     availability: '',
     intro: ''
   });
-  const SHEET_WEBHOOK_URL = import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbw7i_9oQcD-tu-BmqcPvpgHHh3JhRexUxkeRBedaU5zKjO0f8GHFSXlIeV3QssZrdvRhA/exec';
+  const SHEET_WEBHOOK_URL = import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbzvLzaUrInWabO28UyDN-IaOejbtUcjl-y7S-wcmefgIagqyDeOqjrlphNvFKMoW66ECA/exec';
   const CLIENT_FORM_ENDPOINT = import.meta.env.VITE_CLIENT_FORM_ENDPOINT || 'https://formsubmit.co/ajax/hello@sbsmedia.co.in';
   const TEAM_FORM_ENDPOINT = import.meta.env.VITE_TEAM_FORM_ENDPOINT || 'https://formsubmit.co/ajax/hello@sbsmedia.co.in';
 
@@ -281,7 +281,8 @@ const App = () => {
         budget: clientForm.budget,
         timeline: clientForm.timeline,
         ack_email_subject: clientAck.subject,
-        ack_email_body: clientAck.body
+        ack_email_body: clientAck.body,
+        ack_email_html: clientAck.htmlBody
       };
 
       if (SHEET_WEBHOOK_URL) {
@@ -300,6 +301,7 @@ const App = () => {
         payload.append('timeline', clientForm.timeline);
         payload.append('ack_email_subject', clientAck.subject);
         payload.append('ack_email_body', clientAck.body);
+        payload.append('ack_email_html', clientAck.htmlBody);
         await submitFormData(CLIENT_FORM_ENDPOINT, payload);
       }
       setSuccessMessage('Thank you! Our team will contact you shortly.');
@@ -334,7 +336,8 @@ const App = () => {
         location: teamForm.location,
         intro: teamForm.intro,
         ack_email_subject: teamAck.subject,
-        ack_email_body: teamAck.body
+        ack_email_body: teamAck.body,
+        ack_email_html: teamAck.htmlBody
       };
 
       if (SHEET_WEBHOOK_URL) {
@@ -354,6 +357,7 @@ const App = () => {
         payload.append('intro', teamForm.intro);
         payload.append('ack_email_subject', teamAck.subject);
         payload.append('ack_email_body', teamAck.body);
+        payload.append('ack_email_html', teamAck.htmlBody);
         await submitFormData(TEAM_FORM_ENDPOINT, payload);
       }
       setSuccessMessage("Thanks! We'll review your profile and contact you if there's a match.");
