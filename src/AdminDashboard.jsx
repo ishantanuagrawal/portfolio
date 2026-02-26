@@ -52,6 +52,47 @@ const buildRequestUrl = (baseUrl, token) => {
   return url.toString();
 };
 
+const requestViaJsonp = (baseUrl, params = {}) =>
+  new Promise((resolve, reject) => {
+    const callbackName = `sbsAdminCb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const url = new URL(baseUrl);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) url.searchParams.set(key, value);
+    });
+    url.searchParams.set('callback', callbackName);
+
+    let timeoutId = null;
+    const script = document.createElement('script');
+
+    const cleanup = () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try {
+        delete window[callbackName];
+      } catch (_) {
+        window[callbackName] = undefined;
+      }
+    };
+
+    window[callbackName] = (payload) => {
+      cleanup();
+      resolve(payload);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('Failed to fetch admin data.'));
+    };
+
+    timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error('Admin request timed out.'));
+    }, 12000);
+
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
+
 const AdminDashboard = () => {
   const endpoint =
     import.meta.env.VITE_ADMIN_DATA_ENDPOINT ||
@@ -141,16 +182,8 @@ const AdminDashboard = () => {
     setErrorMessage('');
 
     try {
-      const response = await fetch(buildRequestUrl(endpoint, accessToken), {
-        method: 'GET',
-        headers: { Accept: 'application/json' }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Request failed (${response.status}).`);
-      }
-
-      const data = await response.json();
+      const requestUrl = buildRequestUrl(endpoint, accessToken);
+      const data = await requestViaJsonp(requestUrl);
 
       const normalizedClientRows = normalizeRows(
         data.clientRows || data.client || data.client_form_data || data.ClientFormData,
