@@ -1,5 +1,17 @@
 # ishantanuagrawal-portfolio
 
+## Image optimization & lightbox
+
+This portfolio uses a two-tier image system to improve load times.
+Full‑size photography assets live under `public/assets/photography/...` while
+smaller thumbnails are generated into `public/assets/small_assets/photography/...`
+using `npm run make-small` (now a Node script powered by `sharp` for broader format support).
+The React app automatically loads the smaller images in gallery grids and
+opens the full‑size version in a lightbox when any photo (or video/reel
+thumbnail/intro image) is clicked. The lightbox fades in, shows a close
+(`×`) button, and clicking outside the photo will dismiss it.
+
+
 
 
 ## Getting started

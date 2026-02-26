@@ -19,6 +19,7 @@ const App = () => {
   const [videoFilter, setVideoFilter] = useState('all');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState(null);
 
   // --- AUTOMATED ASSET LOADER ---
   const REPO = useMemo(() => {
@@ -64,6 +65,14 @@ const App = () => {
         // FIX: Prepend Vite's BASE_URL so it works on GitHub Pages subdirectories
         const browserUrl = import.meta.env.BASE_URL + path.replace(/^\/public\//, ''); 
 
+        // compute small thumbnail url assuming identical structure under top-level small_assets
+        // fall back to assets/small_assets if the top-level folder isn't served
+        let smallUrl = browserUrl.replace('/assets/photography/', '/small_assets/photography/');
+        if (!smallUrl.startsWith(import.meta.env.BASE_URL)) {
+          // if replacement didn't work, revert to nested path
+          smallUrl = browserUrl.replace('/assets/photography/', '/assets/small_assets/photography/');
+        }
+
         // Look for matching .txt file to extract redirect link
         let externalLink = null;
         if (isVideo) {
@@ -78,6 +87,7 @@ const App = () => {
           id: path,
           title: filenameWithoutExt.replace(/[-_]/g, ' '),
           url: browserUrl,
+          smallUrl: smallUrl, // added for thumbnail
           externalLink: externalLink
         });
       });
@@ -161,6 +171,9 @@ const App = () => {
       setVideoFilter(video.dir);
     } else if (video.externalLink) {
       window.open(video.externalLink, '_blank');
+    } else {
+      // local thumbnail clicked, open lightbox
+      setLightboxUrl(video.url);
     }
   };
 
@@ -174,6 +187,8 @@ const App = () => {
         .fluid-h1 { font-size: clamp(2.5rem, 8vw, 6rem); line-height: 1.1; }
         .fluid-h2 { font-size: clamp(2rem, 5vw, 4rem); line-height: 1.2; }
         .font-serif { font-family: 'Playfair Display', serif; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
       `}</style>
 
       {/* Navigation */}
@@ -235,11 +250,17 @@ const App = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedPhotos.map((photo) => (
-                <div key={photo.id} className="group relative overflow-hidden bg-zinc-50 aspect-[4/5] rounded-sm cursor-pointer shadow-sm" onClick={() => photoFilter === 'all' && setPhotoFilter(photo.dir)}>
-                  <img src={photo.url} alt={photo.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div key={photo.id} className="group relative overflow-hidden bg-zinc-50 aspect-[4/5] rounded-sm cursor-pointer shadow-sm" onClick={() => {
+                      if (photoFilter === 'all') {
+                        setPhotoFilter(photo.dir);
+                      } else {
+                        setLightboxUrl(photo.url);
+                      }
+                    }}>
+                  <img src={photo.smallUrl ?? photo.url} alt={photo.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-8 flex flex-col justify-end text-white">
                     <p className="text-[9px] uppercase tracking-widest mb-1 opacity-80">{formatLabel(photo.dir)}</p>
-                    <h3 className="text-xl font-light">{photoFilter === 'all' ? 'Explore Category' : photo.title}</h3>
+                    <h3 className="text-xl font-light">{photo.title}</h3>
                   </div>
                 </div>
               ))}
@@ -296,8 +317,14 @@ const App = () => {
             {REPO.reels.map((reel) => (
               <div 
                 key={reel.id} 
-                className={`group relative aspect-[9/16] overflow-hidden bg-zinc-100 rounded-sm shadow-sm ${reel.externalLink ? 'cursor-pointer' : ''}`}
-                onClick={() => reel.externalLink && window.open(reel.externalLink, '_blank')}
+                className="group relative aspect-[9/16] overflow-hidden bg-zinc-100 rounded-sm shadow-sm cursor-pointer"
+                onClick={() => {
+                  if (reel.externalLink) {
+                    window.open(reel.externalLink, '_blank');
+                  } else {
+                    setLightboxUrl(reel.url);
+                  }
+                }}
               >
                 <img src={reel.url} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="" />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/30 transition-colors">
@@ -332,7 +359,12 @@ const App = () => {
           </div>
           <div className="relative aspect-[4/5] max-w-sm mx-auto">
              <div className="absolute -inset-4 border border-zinc-200 translate-x-4 translate-y-4 shadow-sm" />
-             <img src={REPO.intro} className="w-full h-full object-cover relative z-10 shadow-2xl transition-all duration-700" alt="Shantanu" />
+             <img
+               src={REPO.intro}
+               className="w-full h-full object-cover relative z-10 shadow-2xl transition-all duration-700 cursor-pointer"
+               alt="Shantanu"
+               onClick={() => setLightboxUrl(REPO.intro)}
+             />
           </div>
         </div>
       </section>
@@ -362,6 +394,28 @@ const App = () => {
           &copy; {new Date().getFullYear()} SBS Media. Quality in every frame.
         </p>
       </footer>
+
+      {/* lightbox overlay */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={lightboxUrl}
+              className="max-h-[90vh] max-w-[90vw] object-contain animate-fade-in"
+              alt="Preview"
+            />
+            <button
+              className="absolute top-0 right-0 text-white text-3xl p-2"
+              onClick={() => setLightboxUrl(null)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
