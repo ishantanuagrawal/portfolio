@@ -380,6 +380,11 @@ const App = () => {
     <div className="min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200 overflow-x-hidden">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Playfair+Display:ital,wght@1,400;1,700&display=swap');
+        :root {
+          --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+          --dur-fast: 180ms;
+          --dur-mid: 360ms;
+        }
         @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .animate-scroll { display: flex; width: max-content; animation: scroll 40s linear infinite; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -388,6 +393,33 @@ const App = () => {
         .font-serif { font-family: 'Playfair Display', serif; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes revealUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes modalPop {
+          from { opacity: 0; transform: translateY(10px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .reveal-up { animation: revealUp .55s var(--ease-smooth) both; }
+        .reveal-stagger { animation-delay: calc(var(--stagger, 0) * 70ms); }
+        .modal-pop { animation: modalPop .24s var(--ease-smooth) both; }
+        .smooth-btn {
+          transition: transform var(--dur-fast) var(--ease-smooth), box-shadow var(--dur-fast) var(--ease-smooth), background-color var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+          will-change: transform;
+        }
+        .smooth-btn:hover { transform: translateY(-1px); }
+        .card-lift {
+          transition: transform var(--dur-mid) var(--ease-smooth), box-shadow var(--dur-mid) var(--ease-smooth), filter var(--dur-mid) var(--ease-smooth);
+          will-change: transform;
+        }
+        .card-lift:hover { transform: translateY(-4px) scale(1.01); }
+        .input-smooth {
+          transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease, background-color var(--dur-fast) ease;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .reveal-up, .reveal-stagger, .modal-pop, .card-lift, .smooth-btn { animation: none !important; transition: none !important; transform: none !important; }
+        }
       `}</style>
 
       {/* Navigation */}
@@ -400,10 +432,10 @@ const App = () => {
             onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
           />
           <div className="hidden md:flex space-x-10 text-[11px] font-bold tracking-widest uppercase text-zinc-400">
-            <button onClick={() => {setActiveTab('photography'); scrollWithOffset('portfolio')}} className="hover:text-zinc-900 transition-colors">Portfolio</button>
-            <button onClick={() => scrollWithOffset('about')} className="hover:text-zinc-900 transition-colors">About</button>
-            <button onClick={() => scrollWithOffset('clients')} className="hover:text-zinc-900 transition-colors">Clients</button>
-            <button onClick={() => scrollWithOffset('contact')} className="hover:text-zinc-900 transition-colors">Contact</button>
+            <button onClick={() => {setActiveTab('photography'); scrollWithOffset('portfolio')}} className="smooth-btn hover:text-zinc-900 transition-colors">Portfolio</button>
+            <button onClick={() => scrollWithOffset('about')} className="smooth-btn hover:text-zinc-900 transition-colors">About</button>
+            <button onClick={() => scrollWithOffset('clients')} className="smooth-btn hover:text-zinc-900 transition-colors">Clients</button>
+            <button onClick={() => scrollWithOffset('contact')} className="smooth-btn hover:text-zinc-900 transition-colors">Contact</button>
           </div>
           <button className="md:hidden z-50 p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -421,8 +453,8 @@ const App = () => {
 
       {/* Hero */}
       <section className="pt-32 pb-12 md:pt-44 md:pb-20 px-6 max-w-7xl mx-auto">
-        <h1 className="fluid-h1 font-light tracking-tight mb-6 leading-[1.1]">Documenting life <br /><span className="font-serif italic text-zinc-400">as it unfolds.</span></h1>
-        <p className="text-base md:text-xl text-zinc-500 max-w-2xl leading-relaxed">High-quality visual storytelling for architecture, interiors, and live events. Based in India, serving globally.</p>
+        <h1 className="fluid-h1 font-light tracking-tight mb-6 leading-[1.1] reveal-up">Documenting life <br /><span className="font-serif italic text-zinc-400">as it unfolds.</span></h1>
+        <p className="text-base md:text-xl text-zinc-500 max-w-2xl leading-relaxed reveal-up reveal-stagger" style={{ '--stagger': 1 }}>High-quality visual storytelling for architecture, interiors, and live events. Based in India, serving globally.</p>
       </section>
 
       {/* Portfolio Grid */}
@@ -448,8 +480,8 @@ const App = () => {
               ))}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedPhotos.map((photo) => (
-                <div key={photo.id} className="group relative overflow-hidden bg-zinc-50 aspect-[4/5] rounded-sm cursor-pointer shadow-sm" onClick={() => {
+              {displayedPhotos.map((photo, index) => (
+                <div key={photo.id} className="group relative overflow-hidden bg-zinc-50 aspect-[4/5] rounded-sm cursor-pointer shadow-sm card-lift reveal-up reveal-stagger" style={{ '--stagger': index }} onClick={() => {
                       if (photoFilter === 'all') {
                         setPhotoFilter(photo.dir);
                       } else {
@@ -479,10 +511,11 @@ const App = () => {
               ))}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {displayedVideos.map((video) => (
+              {displayedVideos.map((video, index) => (
                 <div 
                   key={video.id} 
-                  className="group cursor-pointer" 
+                  className="group cursor-pointer card-lift reveal-up reveal-stagger"
+                  style={{ '--stagger': index }}
                   onClick={() => handleVideoClick(video)}
                 >
                   <div className="relative aspect-video overflow-hidden rounded-sm mb-4 bg-zinc-100 shadow-sm">
@@ -513,10 +546,11 @@ const App = () => {
         {/* Reels Section */}
         {activeTab === 'reels' && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
-            {REPO.reels.map((reel) => (
+            {REPO.reels.map((reel, index) => (
                 <div 
                 key={reel.id} 
-                className="group relative aspect-[9/16] overflow-hidden bg-zinc-100 rounded-sm shadow-sm cursor-pointer"
+                className="group relative aspect-[9/16] overflow-hidden bg-zinc-100 rounded-sm shadow-sm cursor-pointer card-lift reveal-up reveal-stagger"
+                style={{ '--stagger': index }}
                 onClick={() => {
                   if (reel.externalLink) {
                     window.open(reel.externalLink, '_blank');
@@ -600,7 +634,7 @@ const App = () => {
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
           onClick={() => setLightboxContent(null)}
         >
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
+          <div className="relative modal-pop" onClick={(e) => e.stopPropagation()}>
             {lightboxContent.type === 'image' && (
               <img
                 src={lightboxContent.src}
@@ -639,7 +673,7 @@ const App = () => {
       {/* Join Us Button - Fixed Bottom Right */}
       <button
         onClick={() => setJoinUsModal(true)}
-        className="fixed bottom-8 right-8 z-40 bg-gradient-to-r from-zinc-900 to-zinc-800 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold text-[13px] uppercase tracking-widest hover:scale-105"
+        className="fixed bottom-8 right-8 z-40 bg-gradient-to-r from-zinc-900 to-zinc-800 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all font-semibold text-[13px] uppercase tracking-widest hover:scale-105 smooth-btn"
       >
         Join Us
       </button>
@@ -650,26 +684,26 @@ const App = () => {
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
           onClick={closeJoinUsAndReset}
         >
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 animate-fade-in shadow-2xl modal-pop" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-2xl font-bold mb-6 text-zinc-900">Join SBS Media</h2>
             <p className="text-zinc-500 mb-6">What brings you here?</p>
             <div className="space-y-4">
               <button
                 onClick={() => { setErrorMessage(null); setJoinUsType('client'); }}
-                className="w-full bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors"
+                className="w-full bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors smooth-btn"
               >
                 Looking for Videographer / Photography Services
               </button>
               <button
                 onClick={() => { setErrorMessage(null); setJoinUsType('team'); }}
-                className="w-full border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
+                className="w-full border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors smooth-btn"
               >
                 Looking to Join Our Team
               </button>
             </div>
             <button
               onClick={closeJoinUsAndReset}
-              className="mt-6 w-full text-zinc-400 text-sm hover:text-zinc-600"
+              className="mt-6 w-full text-zinc-400 text-sm hover:text-zinc-600 smooth-btn"
             >
               Close
             </button>
@@ -683,7 +717,7 @@ const App = () => {
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto"
           onClick={closeJoinUsAndReset}
         >
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl modal-pop" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-zinc-900">Start Your Project</h2>
               <button onClick={closeJoinUsAndReset} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
@@ -696,7 +730,7 @@ const App = () => {
                   placeholder="Full Name *"
                   value={clientForm.name}
                   onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 />
                 <input
@@ -704,7 +738,7 @@ const App = () => {
                   placeholder="Company / Brand Name"
                   value={clientForm.company}
                   onChange={(e) => setClientForm({ ...clientForm, company: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -713,7 +747,7 @@ const App = () => {
                   placeholder="Email *"
                   value={clientForm.email}
                   onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 />
                 <input
@@ -721,14 +755,14 @@ const App = () => {
                   placeholder="Phone Number"
                   value={clientForm.phone}
                   onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select
                   value={clientForm.serviceType}
                   onChange={(e) => setClientForm({ ...clientForm, serviceType: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 >
                   <option value="">Service Type *</option>
@@ -742,7 +776,7 @@ const App = () => {
                 <select
                   value={clientForm.budget}
                   onChange={(e) => setClientForm({ ...clientForm, budget: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 >
                   <option value="">Budget *</option>
@@ -756,7 +790,7 @@ const App = () => {
                 placeholder="Project Description"
                 value={clientForm.projectDescription}
                 onChange={(e) => setClientForm({ ...clientForm, projectDescription: e.target.value })}
-                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                 rows="3"
               />
               <input
@@ -764,20 +798,20 @@ const App = () => {
                 placeholder="Expected Timeline"
                 value={clientForm.timeline}
                 onChange={(e) => setClientForm({ ...clientForm, timeline: e.target.value })}
-                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
               />
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50 smooth-btn"
                 >
                   {submitting ? 'Submitting...' : 'Submit'}
                 </button>
                 <button
                   type="button"
                   onClick={closeJoinUsAndReset}
-                  className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
+                  className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors smooth-btn"
                 >
                   Cancel
                 </button>
@@ -793,7 +827,7 @@ const App = () => {
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto"
           onClick={closeJoinUsAndReset}
         >
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8 animate-fade-in shadow-2xl modal-pop" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-zinc-900">Join Our Team</h2>
               <button onClick={closeJoinUsAndReset} className="text-zinc-400 hover:text-zinc-600 text-2xl">×</button>
@@ -806,7 +840,7 @@ const App = () => {
                   placeholder="Full Name *"
                   value={teamForm.name}
                   onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 />
                 <input
@@ -814,7 +848,7 @@ const App = () => {
                   placeholder="Email *"
                   value={teamForm.email}
                   onChange={(e) => setTeamForm({ ...teamForm, email: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 />
               </div>
@@ -824,12 +858,12 @@ const App = () => {
                   placeholder="Phone Number"
                   value={teamForm.phone}
                   onChange={(e) => setTeamForm({ ...teamForm, phone: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                 />
                 <select
                   value={teamForm.role}
                   onChange={(e) => setTeamForm({ ...teamForm, role: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 >
                   <option value="">Role Applying For *</option>
@@ -846,7 +880,7 @@ const App = () => {
                 <select
                   value={teamForm.experience}
                   onChange={(e) => setTeamForm({ ...teamForm, experience: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                   required
                 >
                   <option value="">Experience Level *</option>
@@ -858,7 +892,7 @@ const App = () => {
                 <select
                   value={teamForm.availability}
                   onChange={(e) => setTeamForm({ ...teamForm, availability: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                 >
                   <option value="">Availability</option>
                   <option value="fulltime">Full-time</option>
@@ -872,7 +906,7 @@ const App = () => {
                   placeholder="Portfolio Link (behance, instagram, website)"
                   value={teamForm.portfolioLink}
                   onChange={(e) => setTeamForm({ ...teamForm, portfolioLink: e.target.value })}
-                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  className="px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                 />
                 <input
                   type="text"
@@ -886,21 +920,21 @@ const App = () => {
                 placeholder="Short Introduction"
                 value={teamForm.intro}
                 onChange={(e) => setTeamForm({ ...teamForm, intro: e.target.value })}
-                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                className="w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 input-smooth"
                 rows="3"
               />
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50"
+                  className="flex-1 bg-zinc-900 text-white py-3 rounded-lg font-semibold hover:bg-zinc-800 transition-colors disabled:opacity-50 smooth-btn"
                 >
                   {submitting ? 'Submitting...' : 'Submit'}
                 </button>
                 <button
                   type="button"
                   onClick={closeJoinUsAndReset}
-                  className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors"
+                  className="flex-1 border-2 border-zinc-900 text-zinc-900 py-3 rounded-lg font-semibold hover:bg-zinc-50 transition-colors smooth-btn"
                 >
                   Cancel
                 </button>
