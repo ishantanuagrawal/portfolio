@@ -259,6 +259,21 @@ const App = () => {
     });
   };
 
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      if (typeof dataUrl !== 'string') {
+        reject(new Error('Failed to read file data.'));
+        return;
+      }
+      const base64 = dataUrl.split(',')[1] || '';
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error('Could not read selected file.'));
+    reader.readAsDataURL(file);
+  });
+
   const handleClientSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -327,10 +342,20 @@ const App = () => {
         portfolio_link: teamForm.portfolioLink,
         location: teamForm.location,
         intro: teamForm.intro,
-        resume_file_name: teamForm.resume?.name || ''
+        resume_file_name: teamForm.resume?.name || '',
+        resume_mime_type: teamForm.resume?.type || '',
+        resume_base64: ''
       };
 
       if (SHEET_WEBHOOK_URL) {
+        if (teamForm.resume) {
+          // Keep payload within practical limits for Apps Script web apps.
+          const maxResumeSizeBytes = 5 * 1024 * 1024;
+          if (teamForm.resume.size > maxResumeSizeBytes) {
+            throw new Error('Resume must be 5MB or smaller.');
+          }
+          teamPayload.resume_base64 = await fileToBase64(teamForm.resume);
+        }
         await submitToSheetWebhook(teamPayload);
       } else {
         const payload = new FormData();
