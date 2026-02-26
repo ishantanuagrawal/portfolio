@@ -47,7 +47,7 @@ const App = () => {
     intro: '',
     resume: null
   });
-  const SHEET_WEBHOOK_URL = import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbxO1sn9Y1vKySMpYdCZWOewuSEGMqdD6XfUVAW5H314IF9xtTl8OOqYfGtHoyw5JrJSZw/exec';
+  const SHEET_WEBHOOK_URL = import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbzzQC8bX92FajirMjyh6OnhA9NfOiO0Qn6V6nA6WNwuQc1jFzLU09bmDKhqwLyyLmJrBQ/exec';
   const CLIENT_FORM_ENDPOINT = import.meta.env.VITE_CLIENT_FORM_ENDPOINT || 'https://formsubmit.co/ajax/hello@sbsmedia.co.in';
   const TEAM_FORM_ENDPOINT = import.meta.env.VITE_TEAM_FORM_ENDPOINT || 'https://formsubmit.co/ajax/hello@sbsmedia.co.in';
 
