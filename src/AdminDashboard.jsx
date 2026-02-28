@@ -6,6 +6,15 @@ const DEFAULT_APPS_SCRIPT_ENDPOINT =
 const DEFAULT_GOOGLE_SHEET_ID = '1ui5NKrhdWafk8nxPBbqxqQonGYU1dAQuN-LZmQUmtSw';
 const GOOGLE_SHEET_ID = import.meta.env.VITE_GOOGLE_SHEET_ID || DEFAULT_GOOGLE_SHEET_ID;
 
+const GAME_ROLES = ['Raja', 'Mantri', 'Chor', 'Sipahi'];
+const DEFAULT_ROLE_POINTS = {
+  Raja: 1000,
+  Mantri: 700,
+  Sipahi: 500,
+  Chor: 0,
+  Janta: 250
+};
+
 const normalizeRows = (payload, fallbackType) => {
   if (!payload) return [];
 
@@ -150,19 +159,52 @@ const fetchSheetTabViaGviz = (sheetId, tabName) =>
     document.body.appendChild(script);
   });
 
+const shuffle = (arr) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
+const normalizePlayersInput = (value) => {
+  const raw = value
+    .split(/\n|,|;/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  const unique = [];
+  raw.forEach((name) => {
+    if (!unique.some((entry) => entry.toLowerCase() === name.toLowerCase())) unique.push(name);
+  });
+
+  return unique.slice(0, 10);
+};
+
 const AdminDashboard = () => {
   const endpoint =
     import.meta.env.VITE_ADMIN_DATA_ENDPOINT ||
     import.meta.env.VITE_JOIN_US_SHEET_WEBHOOK_URL ||
     DEFAULT_APPS_SCRIPT_ENDPOINT;
+
+  const [panel, setPanel] = useState('submissions');
   const [tokenInput, setTokenInput] = useState('');
   const [token, setToken] = useState(() => sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || '');
-  const [activeTab, setActiveTab] = useState('all');
+  const [submissionsTab, setSubmissionsTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [clientRows, setClientRows] = useState([]);
   const [teamRows, setTeamRows] = useState([]);
+
+  const [playersInput, setPlayersInput] = useState('');
+  const [players, setPlayers] = useState([]);
+  const [rolePoints, setRolePoints] = useState(DEFAULT_ROLE_POINTS);
+  const [gameError, setGameError] = useState('');
+  const [currentRound, setCurrentRound] = useState(null);
+  const [rolesRevealed, setRolesRevealed] = useState(false);
+  const [roundLedger, setRoundLedger] = useState([]);
 
   const allRows = useMemo(() => {
     const merged = [
@@ -178,9 +220,9 @@ const AdminDashboard = () => {
   }, [clientRows, teamRows]);
 
   const filteredRows = useMemo(() => {
-    const baseRows = activeTab === 'client'
+    const baseRows = submissionsTab === 'client'
       ? clientRows
-      : activeTab === 'team'
+      : submissionsTab === 'team'
         ? teamRows
         : allRows;
 
@@ -190,7 +232,7 @@ const AdminDashboard = () => {
     return baseRows.filter((row) =>
       Object.values(row).some((value) => String(value ?? '').toLowerCase().includes(needle))
     );
-  }, [activeTab, clientRows, teamRows, allRows, searchQuery]);
+  }, [submissionsTab, clientRows, teamRows, allRows, searchQuery]);
 
   const visibleColumns = useMemo(() => {
     const keys = new Set();
@@ -210,7 +252,7 @@ const AdminDashboard = () => {
       'phone'
     ];
 
-    const sorted = [...keys].sort((a, b) => {
+    return [...keys].sort((a, b) => {
       const aIndex = preferredOrder.indexOf(a);
       const bIndex = preferredOrder.indexOf(b);
       if (aIndex !== -1 || bIndex !== -1) {
@@ -220,16 +262,40 @@ const AdminDashboard = () => {
       }
       return a.localeCompare(b);
     });
-
-    return sorted;
   }, [filteredRows]);
 
-  const fetchRows = async (accessToken) => {
-    if (!endpoint) {
-      setErrorMessage('Admin endpoint is missing. Set VITE_ADMIN_DATA_ENDPOINT.');
-      return;
-    }
+  const totalsByPlayer = useMemo(() => {
+    const seed = {};
+    players.forEach((name) => {
+      seed[name] = 0;
+    });
 
+    roundLedger.forEach((round) => {
+      round.assignments.forEach((entry) => {
+        seed[entry.name] = (seed[entry.name] || 0) + entry.points;
+      });
+    });
+
+    return seed;
+  }, [players, roundLedger]);
+
+  const leaderboard = useMemo(() => {
+    return Object.entries(totalsByPlayer)
+      .map(([name, points]) => ({ name, points }))
+      .sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+  }, [totalsByPlayer]);
+
+  const ledgerRows = useMemo(() => {
+    return roundLedger.flatMap((round) =>
+      round.assignments.map((assignment) => ({
+        round: round.round,
+        timestamp: round.timestamp,
+        ...assignment
+      }))
+    );
+  }, [roundLedger]);
+
+  const fetchRows = async (accessToken) => {
     if (!accessToken) {
       setErrorMessage('Enter access token to continue.');
       return;
@@ -276,9 +342,7 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchRows(token);
-    }
+    if (token) fetchRows(token);
   }, [token]);
 
   const handleLogin = (e) => {
@@ -301,6 +365,73 @@ const AdminDashboard = () => {
     setTeamRows([]);
     setSearchQuery('');
     setErrorMessage('');
+  };
+
+  const handleLoadPlayers = () => {
+    const normalized = normalizePlayersInput(playersInput);
+    if (normalized.length < 4 || normalized.length > 10) {
+      setGameError('Enter between 4 and 10 unique player names.');
+      return;
+    }
+
+    setPlayers(normalized);
+    setGameError('');
+    setCurrentRound(null);
+    setRolesRevealed(false);
+    setRoundLedger([]);
+  };
+
+  const drawRandomRound = () => {
+    if (players.length < 4) {
+      setGameError('Load at least 4 players first.');
+      return;
+    }
+
+    const shuffledPlayers = shuffle(players);
+    const shuffledRoles = shuffle(GAME_ROLES);
+    const assignments = [];
+
+    shuffledPlayers.forEach((name, index) => {
+      const role = index < 4 ? shuffledRoles[index] : 'Janta';
+      assignments.push({
+        name,
+        role,
+        points: Number(rolePoints[role] || 0)
+      });
+    });
+
+    setCurrentRound({
+      round: roundLedger.length + 1,
+      assignments
+    });
+    setRolesRevealed(false);
+    setGameError('');
+  };
+
+  const saveRoundToLedger = () => {
+    if (!currentRound) {
+      setGameError('Draw a round first.');
+      return;
+    }
+
+    setRoundLedger((prev) => [
+      ...prev,
+      {
+        round: currentRound.round,
+        timestamp: new Date().toISOString(),
+        assignments: currentRound.assignments
+      }
+    ]);
+    setCurrentRound(null);
+    setRolesRevealed(false);
+    setGameError('');
+  };
+
+  const resetGame = () => {
+    setCurrentRound(null);
+    setRolesRevealed(false);
+    setRoundLedger([]);
+    setGameError('');
   };
 
   if (!token) {
@@ -336,8 +467,8 @@ const AdminDashboard = () => {
         <div className="bg-white border border-zinc-200 rounded-xl p-4 md:p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold">Submissions</h1>
-              <p className="text-sm text-zinc-600">Search and review Client + Team form entries.</p>
+              <h1 className="text-2xl font-semibold">Admin Control Center</h1>
+              <p className="text-sm text-zinc-600">Manage submissions and run the live game console.</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -355,55 +486,192 @@ const AdminDashboard = () => {
               </button>
             </div>
           </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => setPanel('submissions')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold ${panel === 'submissions' ? 'bg-zinc-900 text-white' : 'border border-zinc-300 hover:bg-zinc-50'}`}
+            >
+              Submissions
+            </button>
+            <button
+              onClick={() => setPanel('game')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold ${panel === 'game' ? 'bg-zinc-900 text-white' : 'border border-zinc-300 hover:bg-zinc-50'}`}
+            >
+              Raja Mantri Chor Sipahi
+            </button>
+          </div>
+        </div>
 
-          <div className="mt-4 flex flex-col md:flex-row gap-3">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name, email, phone, role, budget..."
-              className="w-full md:flex-1 border border-zinc-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-            />
-            <div className="flex gap-2">
-              <button onClick={() => setActiveTab('all')} className={`px-3 py-2 rounded-lg text-sm ${activeTab === 'all' ? 'bg-zinc-900 text-white' : 'border border-zinc-300'}`}>All</button>
-              <button onClick={() => setActiveTab('client')} className={`px-3 py-2 rounded-lg text-sm ${activeTab === 'client' ? 'bg-zinc-900 text-white' : 'border border-zinc-300'}`}>Client</button>
-              <button onClick={() => setActiveTab('team')} className={`px-3 py-2 rounded-lg text-sm ${activeTab === 'team' ? 'bg-zinc-900 text-white' : 'border border-zinc-300'}`}>Team</button>
+        {panel === 'submissions' && (
+          <>
+            <div className="bg-white border border-zinc-200 rounded-xl p-4 md:p-6">
+              <div className="mt-1 flex flex-col md:flex-row gap-3">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, email, phone, role, budget..."
+                  className="w-full md:flex-1 border border-zinc-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setSubmissionsTab('all')} className={`px-3 py-2 rounded-lg text-sm ${submissionsTab === 'all' ? 'bg-zinc-900 text-white' : 'border border-zinc-300'}`}>All</button>
+                  <button onClick={() => setSubmissionsTab('client')} className={`px-3 py-2 rounded-lg text-sm ${submissionsTab === 'client' ? 'bg-zinc-900 text-white' : 'border border-zinc-300'}`}>Client</button>
+                  <button onClick={() => setSubmissionsTab('team')} className={`px-3 py-2 rounded-lg text-sm ${submissionsTab === 'team' ? 'bg-zinc-900 text-white' : 'border border-zinc-300'}`}>Team</button>
+                </div>
+              </div>
+              {errorMessage && <p className="text-red-600 text-sm mt-3">{errorMessage}</p>}
+            </div>
+
+            <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+              <div className="overflow-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-zinc-50 border-b border-zinc-200">
+                    <tr>
+                      {visibleColumns.map((column) => (
+                        <th key={column} className="text-left font-semibold px-4 py-3 whitespace-nowrap">{column}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRows.length === 0 && (
+                      <tr>
+                        <td colSpan={Math.max(visibleColumns.length, 1)} className="px-4 py-8 text-center text-zinc-500">
+                          {loading ? 'Loading data...' : 'No submissions found.'}
+                        </td>
+                      </tr>
+                    )}
+                    {filteredRows.map((row, index) => (
+                      <tr key={`${row.email || 'row'}-${index}`} className="border-b border-zinc-100">
+                        {visibleColumns.map((column) => (
+                          <td key={`${column}-${index}`} className="px-4 py-3 align-top max-w-[320px] break-words">
+                            {String(row[column] ?? '')}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {panel === 'game' && (
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="xl:col-span-2 space-y-4">
+              <div className="bg-white border border-zinc-200 rounded-xl p-4 md:p-6">
+                <h2 className="text-xl font-semibold mb-1">Game Setup</h2>
+                <p className="text-sm text-zinc-600 mb-4">Enter 4 to 10 contestant names. One Raja, one Mantri, one Chor, one Sipahi are assigned every round. Others are Janta.</p>
+                <textarea
+                  value={playersInput}
+                  onChange={(e) => setPlayersInput(e.target.value)}
+                  rows={5}
+                  placeholder="Enter names (one per line or comma-separated)"
+                  className="w-full border border-zinc-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button onClick={handleLoadPlayers} className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-semibold hover:bg-zinc-800">Load Players</button>
+                  <button onClick={drawRandomRound} className="px-4 py-2 border border-zinc-300 rounded-lg text-sm font-semibold hover:bg-zinc-50">Draw Random Roles</button>
+                  <button onClick={() => setRolesRevealed((prev) => !prev)} className="px-4 py-2 border border-zinc-300 rounded-lg text-sm font-semibold hover:bg-zinc-50">
+                    {rolesRevealed ? 'Hide Roles' : 'Reveal Roles'}
+                  </button>
+                  <button onClick={saveRoundToLedger} className="px-4 py-2 border border-zinc-300 rounded-lg text-sm font-semibold hover:bg-zinc-50">Save Round to Ledger</button>
+                  <button onClick={resetGame} className="px-4 py-2 border border-red-300 text-red-700 rounded-lg text-sm font-semibold hover:bg-red-50">Reset Game</button>
+                </div>
+                {gameError && <p className="text-red-600 text-sm mt-3">{gameError}</p>}
+              </div>
+
+              <div className="bg-white border border-zinc-200 rounded-xl p-4 md:p-6">
+                <h3 className="text-lg font-semibold mb-3">Role Points</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {Object.keys(rolePoints).map((role) => (
+                    <label key={role} className="text-sm">
+                      <span className="block text-zinc-600 mb-1">{role}</span>
+                      <input
+                        type="number"
+                        value={rolePoints[role]}
+                        onChange={(e) => setRolePoints((prev) => ({ ...prev, [role]: Number(e.target.value || 0) }))}
+                        className="w-full border border-zinc-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white border border-zinc-200 rounded-xl p-4 md:p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold">Current Round</h3>
+                  <p className="text-sm text-zinc-500">{currentRound ? `Round ${currentRound.round}` : 'No active round'}</p>
+                </div>
+                {!currentRound && <p className="text-sm text-zinc-500">Draw random roles to start a new round.</p>}
+                {currentRound && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {currentRound.assignments.map((entry) => (
+                      <div key={entry.name} className="border border-zinc-200 rounded-lg p-3 bg-zinc-50">
+                        <p className="text-sm text-zinc-500">Contestant</p>
+                        <p className="font-semibold text-zinc-900">{entry.name}</p>
+                        <p className="mt-2 text-xs uppercase tracking-wide text-zinc-500">Role</p>
+                        <p className="text-sm font-semibold">{rolesRevealed ? entry.role : 'Hidden'}</p>
+                        <p className="text-xs text-zinc-500 mt-1">Points: {rolesRevealed ? entry.points : '—'}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-white border border-zinc-200 rounded-xl p-4 md:p-6">
+                <h3 className="text-lg font-semibold mb-3">Leaderboard</h3>
+                {leaderboard.length === 0 && <p className="text-sm text-zinc-500">No scores yet.</p>}
+                {leaderboard.length > 0 && (
+                  <div className="space-y-2">
+                    {leaderboard.map((entry, index) => (
+                      <div key={entry.name} className="flex items-center justify-between border border-zinc-200 rounded-lg px-3 py-2">
+                        <div>
+                          <p className="text-xs text-zinc-500">#{index + 1}</p>
+                          <p className="font-semibold">{entry.name}</p>
+                        </div>
+                        <p className="text-lg font-bold">{entry.points}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white border border-zinc-200 rounded-xl p-4 md:p-6">
+                <h3 className="text-lg font-semibold mb-3">Round Ledger</h3>
+                <div className="max-h-[420px] overflow-auto">
+                  <table className="min-w-full text-xs">
+                    <thead className="bg-zinc-50 sticky top-0">
+                      <tr>
+                        <th className="text-left px-2 py-2">Round</th>
+                        <th className="text-left px-2 py-2">Name</th>
+                        <th className="text-left px-2 py-2">Role</th>
+                        <th className="text-right px-2 py-2">Points</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ledgerRows.length === 0 && (
+                        <tr>
+                          <td className="px-2 py-3 text-zinc-500" colSpan={4}>No rounds saved yet.</td>
+                        </tr>
+                      )}
+                      {ledgerRows.map((row, idx) => (
+                        <tr key={`${row.round}-${row.name}-${idx}`} className="border-t border-zinc-100">
+                          <td className="px-2 py-2">{row.round}</td>
+                          <td className="px-2 py-2">{row.name}</td>
+                          <td className="px-2 py-2">{row.role}</td>
+                          <td className="px-2 py-2 text-right font-semibold">{row.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
-          {errorMessage && <p className="text-red-600 text-sm mt-3">{errorMessage}</p>}
-        </div>
-
-        <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-          <div className="overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-zinc-50 border-b border-zinc-200">
-                <tr>
-                  {visibleColumns.map((column) => (
-                    <th key={column} className="text-left font-semibold px-4 py-3 whitespace-nowrap">{column}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.length === 0 && (
-                  <tr>
-                    <td colSpan={Math.max(visibleColumns.length, 1)} className="px-4 py-8 text-center text-zinc-500">
-                      {loading ? 'Loading data...' : 'No submissions found.'}
-                    </td>
-                  </tr>
-                )}
-                {filteredRows.map((row, index) => (
-                  <tr key={`${row.email || 'row'}-${index}`} className="border-b border-zinc-100">
-                    {visibleColumns.map((column) => (
-                      <td key={`${column}-${index}`} className="px-4 py-3 align-top max-w-[320px] break-words">
-                        {String(row[column] ?? '')}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
