@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Mail, 
-  Instagram, 
-  Youtube, 
-  Linkedin, 
-  Twitter, 
-  MessageCircle, 
-  ChevronRight, 
-  Menu, 
-  X, 
+import {
+  Mail,
+  Instagram,
+  Youtube,
+  Linkedin,
+  Twitter,
+  MessageCircle,
+  ChevronRight,
+  Menu,
+  X,
   Globe,
   Smartphone
 } from 'lucide-react';
@@ -63,13 +63,13 @@ const App = () => {
     try {
       // Photography: Standard images in subdirectories
       photoModules = import.meta.glob('/public/assets/photography/*/*.{avif,png,jpg,jpeg,webp,JPG,PNG}', { eager: true });
-      
+
       // Videography: Thumbnails/Images in subdirectories
       videoModules = import.meta.glob('/public/assets/videography/*/*.{avif,png,jpg,jpeg,webp,mp4,webm}', { eager: true });
-      
+
       // Videography Links: .txt files containing the redirect URLs (per-file)
       videoTxtModules = import.meta.glob('/public/assets/videography/*/*.txt', { query: '?raw', import: 'default', eager: true });
-      
+
       // Reels: Flat directory assets
       reelModules = import.meta.glob('/public/assets/reels/*.{avif,png,jpg,jpeg,webp,mp4}', { eager: true });
 
@@ -86,14 +86,14 @@ const App = () => {
       const folders = {};
       Object.keys(modules).forEach((path) => {
         const parts = path.split('/');
-        const subdir = parts[4]; 
+        const subdir = parts[4];
         if (!subdir) return;
 
         const fullFilename = parts[parts.length - 1];
         const filenameWithoutExt = fullFilename.split('.').slice(0, -1).join('.');
-        
+
         // FIX: Prepend Vite's BASE_URL so it works on GitHub Pages subdirectories
-        const browserUrl = import.meta.env.BASE_URL + path.replace(/^\/public\//, ''); 
+        const browserUrl = import.meta.env.BASE_URL + path.replace(/^\/public\//, '');
 
         // compute small thumbnail url assuming identical structure under top-level small_assets
         // fall back to assets/small_assets if the top-level folder isn't served
@@ -126,7 +126,7 @@ const App = () => {
 
     const photography = processSubdirs(photoModules, false);
     const videography = processSubdirs(videoModules, true);
-    
+
     // Process Reels
     const reels = Object.keys(reelModules).map(path => {
       const filenameWithoutExt = path.split('/').pop().split('.').slice(0, -1).join('.');
@@ -135,7 +135,7 @@ const App = () => {
       if (reelTxtModules[txtPath]) {
         externalLink = reelTxtModules[txtPath].trim();
       }
-      
+
       return {
         id: path,
         // FIX: Prepend Vite's BASE_URL 
@@ -147,10 +147,10 @@ const App = () => {
 
     // Pick the intro image (first file in public/assets/intro/)
     const introImgPath = Object.keys(introModules)[0];
-    
+
     // FIX: Prepend Vite's BASE_URL to the intro image
-    const introImage = introImgPath 
-      ? import.meta.env.BASE_URL + introImgPath.replace(/^\/public\//, '') 
+    const introImage = introImgPath
+      ? import.meta.env.BASE_URL + introImgPath.replace(/^\/public\//, '')
       : 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=800';
 
     return { photography, videography, reels, intro: introImage };
@@ -429,10 +429,10 @@ const App = () => {
             src={import.meta.env.BASE_URL + 'assets/sbslogo/Black%20png%20logo%20for%20watermark%20SBS.png'}
             alt="SBS Media Logo"
             className="site-logo cursor-pointer transition-opacity hover:opacity-80"
-            onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           />
           <div className="hidden md:flex space-x-10 text-[11px] font-bold tracking-widest uppercase text-zinc-400">
-            <button onClick={() => {setActiveTab('photography'); scrollWithOffset('portfolio')}} className="smooth-btn hover:text-zinc-900 transition-colors">Portfolio</button>
+            <button onClick={() => { setActiveTab('photography'); scrollWithOffset('portfolio') }} className="smooth-btn hover:text-zinc-900 transition-colors">Portfolio</button>
             <button onClick={() => scrollWithOffset('about')} className="smooth-btn hover:text-zinc-900 transition-colors">About</button>
             <button onClick={() => scrollWithOffset('clients')} className="smooth-btn hover:text-zinc-900 transition-colors">Clients</button>
             <button onClick={() => scrollWithOffset('contact')} className="smooth-btn hover:text-zinc-900 transition-colors">Contact</button>
@@ -461,7 +461,7 @@ const App = () => {
       <main id="portfolio" className="max-w-7xl mx-auto px-6 pb-24 border-t border-zinc-100 pt-10">
         <div className="flex space-x-10 mb-10 border-b border-zinc-100 overflow-x-auto no-scrollbar">
           {['photography', 'videography', 'reels'].map((tab) => (
-            <button key={tab} onClick={() => {setActiveTab(tab); setPhotoFilter('all'); setVideoFilter('all')}} className={`pb-4 text-[11px] uppercase tracking-widest transition-all relative font-bold ${activeTab === tab ? 'text-zinc-900' : 'text-zinc-400'}`}>
+            <button key={tab} onClick={() => { setActiveTab(tab); setPhotoFilter('all'); setVideoFilter('all') }} className={`pb-4 text-[11px] uppercase tracking-widest transition-all relative font-bold ${activeTab === tab ? 'text-zinc-900' : 'text-zinc-400'}`}>
               {tab}
               {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-zinc-900" />}
             </button>
@@ -482,12 +482,12 @@ const App = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayedPhotos.map((photo, index) => (
                 <div key={photo.id} className="group relative overflow-hidden bg-zinc-50 aspect-[4/5] rounded-sm cursor-pointer shadow-sm card-lift reveal-up reveal-stagger" style={{ '--stagger': index }} onClick={() => {
-                      if (photoFilter === 'all') {
-                        setPhotoFilter(photo.dir);
-                      } else {
-                        setLightboxContent({ type: 'image', src: photo.url });
-                      }
-                    }}>
+                  if (photoFilter === 'all') {
+                    setPhotoFilter(photo.dir);
+                  } else {
+                    setLightboxContent({ type: 'image', src: photo.url });
+                  }
+                }}>
                   <img src={photo.smallUrl ?? photo.url} alt={photo.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-8 flex flex-col justify-end text-white">
                     <p className="text-[9px] uppercase tracking-widest mb-1 opacity-80">{formatLabel(photo.dir)}</p>
@@ -512,8 +512,8 @@ const App = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               {displayedVideos.map((video, index) => (
-                <div 
-                  key={video.id} 
+                <div
+                  key={video.id}
                   className="group cursor-pointer card-lift reveal-up reveal-stagger"
                   style={{ '--stagger': index }}
                   onClick={() => handleVideoClick(video)}
@@ -547,8 +547,8 @@ const App = () => {
         {activeTab === 'reels' && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
             {REPO.reels.map((reel, index) => (
-                <div 
-                key={reel.id} 
+              <div
+                key={reel.id}
                 className="group relative aspect-[9/16] overflow-hidden bg-zinc-100 rounded-sm shadow-sm cursor-pointer card-lift reveal-up reveal-stagger"
                 style={{ '--stagger': index }}
                 onClick={() => {
@@ -569,8 +569,8 @@ const App = () => {
                   </div>
                 )}
                 <div className="absolute bottom-6 left-6 text-white drop-shadow-md">
-                   <p className="text-[9px] uppercase tracking-widest font-bold">Reel</p>
-                   <h3 className="text-lg font-light leading-tight">{reel.title}</h3>
+                  <p className="text-[9px] uppercase tracking-widest font-bold">Reel</p>
+                  <h3 className="text-lg font-light leading-tight">{reel.title}</h3>
                 </div>
               </div>
             ))}
@@ -591,13 +591,13 @@ const App = () => {
             </div>
           </div>
           <div className="relative aspect-[4/5] max-w-sm mx-auto">
-             <div className="absolute -inset-4 border border-zinc-200 translate-x-4 translate-y-4 shadow-sm" />
-             <img
-               src={REPO.intro}
-               className="w-full h-full object-cover relative z-10 shadow-2xl transition-all duration-700 cursor-pointer"
-               alt="Shantanu"
-               onClick={() => setLightboxContent({ type: 'image', src: REPO.intro })}
-             />
+            <div className="absolute -inset-4 border border-zinc-200 translate-x-4 translate-y-4 shadow-sm" />
+            <img
+              src={REPO.intro}
+              className="w-full h-full object-cover relative z-10 shadow-2xl transition-all duration-700 cursor-pointer"
+              alt="Shantanu"
+              onClick={() => setLightboxContent({ type: 'image', src: REPO.intro })}
+            />
           </div>
         </div>
       </section>
@@ -607,7 +607,7 @@ const App = () => {
         <div className="px-6 max-w-7xl mx-auto mb-10"><p className="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-bold">Partnerships</p></div>
         <div className="w-full overflow-hidden">
           <div className="animate-scroll whitespace-nowrap py-4">
-            {['Westside', 'Urban Vault', 'Smadex', 'Ketto', 'Aditya Birla', 'Ketto', 'EIMR', 'JITO', 'Riverside', 'RCC', 'Europe Girl', 'NewMe', '1st Coffee', 'Conrad', 'Pi Ventures', 'Vippy Soya', 'Under25','Brigade','BizDateUp','Verix','WLDD','Google','Ola','Bloom','Things 2 Do'].concat(['Vogue', 'Tesla', 'Airbnb', 'Nike', 'Red Bull', 'Adobe', 'Sony', 'Canon', 'Apple', 'Zara', 'BMW', 'Rolex', 'Uber', 'Spotify']).map((c, i) => (
+            {['Westside', 'Urban Vault', 'Smadex', 'Ketto', 'Aditya Birla', 'Ketto', 'EIMR', 'JITO', 'Riverside', 'RCC', 'Europe Girl', 'NewMe', '1st Coffee', 'Conrad', 'Pi Ventures', 'Vippy Soya', 'Under25', 'Brigade', 'BizDateUp', 'Verix', 'WLDD', 'Google', 'Ola', 'Bloom', 'Things 2 Do'].concat(['Vogue', 'Tesla', 'Airbnb', 'Nike', 'Red Bull', 'Adobe', 'Sony', 'Canon', 'Apple', 'Zara', 'BMW', 'Rolex', 'Uber', 'Spotify']).map((c, i) => (
               <span key={i} className="mx-12 text-4xl md:text-6xl font-bold tracking-tighter text-zinc-200 hover:text-zinc-900 transition-colors uppercase select-none">{c}</span>
             ))}
           </div>
@@ -620,7 +620,7 @@ const App = () => {
           <a href="https://instagram.com/storiesbyshantanu/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Instagram size={24} /></a>
           <a href="https://www.youtube.com/@shantanu.sbsmedia/videos" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Youtube size={24} /></a>
           <a href="https://www.linkedin.com/in/shantanu-agrawal-6b3893191/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Linkedin size={24} /></a>
-          <a href="https://wa.me/9455385894" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><MessageCircle size={24} /></a>
+          <a href="https://wa.me/919455385894?text=Hi" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><MessageCircle size={24} /></a>
           <a href="mailto:hello@sbsmedia.co.in" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Mail size={24} /></a>
         </div>
         <p className="text-[9px] uppercase tracking-[0.4em] text-zinc-400 font-medium">
