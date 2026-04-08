@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@icons-pack/react-simple-icons": "^13.13.0",
-    "lucide-react": "^0.344.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "lucide-react": "^1.7.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
