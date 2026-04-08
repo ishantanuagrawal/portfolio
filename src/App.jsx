@@ -621,7 +621,7 @@ const App = () => {
           <a href="https://www.youtube.com/@shantanu.sbsmedia/videos" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Youtube size={24} /></a>
           <a href="https://www.linkedin.com/in/shantanu-agrawal-6b3893191/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Linkedin size={24} /></a>
           <a href="https://wa.me/919455385894?text=Hi" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><MessageCircle size={24} /></a>
-          <a href="mailto:hello@sbsmedia.co.in" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Mail size={24} /></a>
+          <a href="mailto:shantanu@sbsmedia.co.in?subject=Inquiry%20regarding%20photography%20and%20videography%20services&body=Hi%20SBS%20Media%20Team,%0A%0A" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Mail size={24} /></a>
         </div>
         <p className="text-[9px] uppercase tracking-[0.4em] text-zinc-400 font-medium">
           &copy; {new Date().getFullYear()} SBS Media. Quality in every frame.
