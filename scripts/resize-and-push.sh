@@ -15,7 +15,7 @@ echo "Creating commit..."
 MSG=${1:-"image resized feature1"}
 git commit -m "$MSG"
 
-echo "Pushing (force)..."
-git push --force
+echo "Pushing..."
+git push
 
 echo "Done!"
