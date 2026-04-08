@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Mail,
-  Linkedin,
   ChevronRight,
   Menu,
   X,
@@ -615,7 +614,7 @@ const App = () => {
         <div className="flex justify-center flex-wrap gap-12 mb-10 text-zinc-300">
           <a href="https://instagram.com/storiesbyshantanu/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><SiInstagram size={24} /></a>
           <a href="https://www.youtube.com/@shantanu.sbsmedia/videos" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><SiYoutube size={24} /></a>
-          <a href="https://www.linkedin.com/in/shantanu-agrawal-6b3893191/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Linkedin size={24} /></a>
+          <a href="https://www.linkedin.com/in/shantanu-agrawal-6b3893191/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><img src="https://upload.wikimedia.org/wikipedia/commons/8/81/LinkedIn_icon.svg" width="24" height="24"></img></a>
           <a href="https://wa.me/919455385894?text=Hi" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-all transform hover:scale-110"><SiWhatsapp size={24} /></a>
           <a href="mailto:shantanu@sbsmedia.co.in?subject=Inquiry%20regarding%20photography%20and%20videography%20services&body=Hi%20SBS%20Media%20Team,%0A%0A" className="hover:text-zinc-900 transition-all transform hover:scale-110"><Mail size={24} /></a>
         </div>
