@@ -7,6 +7,9 @@ dist/
 build/
 out/
 
+# generated types
+.astro/
+
 # Debug logs
 npm-debug.log*
 yarn-debug.log*
